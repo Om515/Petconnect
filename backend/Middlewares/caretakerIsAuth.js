@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import caretakerModel from "../Models/caretakerModel.js";
+import userModel from "../Models/userModel.js";
 
 const caretakerIsAuth = async (req, res, next) => {
   try {
@@ -15,11 +15,15 @@ const caretakerIsAuth = async (req, res, next) => {
       return res.status(401).json({ success: false, message: "Token expired" });
     }
 
-    // Fetch from caretakerModel using _id (matches createWebToken)
-    req.user = await caretakerModel.findById(decodedData.id).select("-password");
+    // Fetch from unified userModel
+    req.user = await userModel.findById(decodedData.id).select("-password");
 
     if (!req.user) {
       return res.status(401).json({ success: false, message: "Caretaker not found" });
+    }
+
+    if (req.user.role !== "caretaker") {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
     next();

@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, User, PawPrint } from "lucide-react";
-import { CaretakerData } from "../context/CaretakerContext";
+import { AuthData } from "../../../context/AuthContext";
 import assests from "../assets/assests";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
-  const { isAuth, logoutHandler, fetchUser } = CaretakerData();
+  const { fetchCurrentUser } = AuthData();
+  const { isAuthenticated, logout } = AuthData();
 
   useEffect(() => {
-    fetchUser();
+    fetchCurrentUser();
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
@@ -20,7 +21,7 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = () => {
-    logoutHandler();
+    logout();
   };
 
   return (
@@ -49,7 +50,7 @@ const Navbar = () => {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-6 items-center">
-          {isAuth ? (
+          {isAuthenticated ? (
             <div className="flex items-center space-x-4">
               {/* Apply as Caretaker Button */}
               <Link
@@ -119,7 +120,7 @@ const Navbar = () => {
         }`}
       >
         <div className="flex flex-col space-y-4 p-6 bg-cyan-600 bg-opacity-95 backdrop-blur-sm rounded-b-xl shadow-xl">
-          {isAuth && (
+          {isAuthenticated && (
             <>
               {/* Apply as Caretaker (Mobile) */}
               <Link
@@ -154,7 +155,7 @@ const Navbar = () => {
             </>
           )}
 
-          {!isAuth && (
+          {!isAuthenticated && (
             <div className="flex flex-col space-y-3 pt-2">
               <button
                 onClick={() => {

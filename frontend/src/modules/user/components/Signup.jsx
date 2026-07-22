@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { UserData } from "../context/UserContext";
+import { AuthData } from "../../../context/AuthContext";
 
 const Signup = () => {
   const [user, setUser] = useState({
@@ -10,10 +10,11 @@ const Signup = () => {
     password: "",
     mobile: "",
     address: "",
+    role: "user",
   });
 
   const navigate = useNavigate();
-  const { registerUser, btnLoading } = UserData();
+  const { register, btnLoading } = AuthData();
 
   const handleChange = (e) => {
     let name = e.target.name;
@@ -29,7 +30,7 @@ const Signup = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    registerUser(user.name, user.mobile, user.address, user.email, user.password, navigate);
+    register(user.name, user.mobile, user.address, user.email, user.password, user.role);
   };
 
   const togglePasswordVisibility = () => {
@@ -85,6 +86,18 @@ const Signup = () => {
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 h-24"
               required
             ></textarea>
+          </div>
+          <div className="mb-4">
+            <label className="block text-cyan-600 mb-2">Role</label>
+            <select
+              name="role"
+              value={user.role}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 bg-white"
+            >
+              <option value="user">User</option>
+              <option value="caretaker">Caretaker</option>
+            </select>
           </div>
           <div className="mb-4 relative">
             <label className="block text-cyan-600 mb-2">Password</label>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CaretakerData } from "../context/CaretakerContext";
+import { AuthData } from "../../../context/AuthContext";
 import {
   User,
   Mail,
@@ -14,7 +14,7 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 
 const CaretakerProfile = () => {
-  const { user, isAuth } = CaretakerData();
+  const { user, isAuthenticated: isAuth } = AuthData();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);

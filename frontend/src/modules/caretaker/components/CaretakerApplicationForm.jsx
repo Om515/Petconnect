@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CaretakerData } from '../context/CaretakerContext';
+import { AuthData } from '../../../context/AuthContext';
 
 const CaretakerApplicationForm = () => {
   const [formData, setFormData] = useState({
@@ -16,7 +16,7 @@ const CaretakerApplicationForm = () => {
   const [currentSkill, setCurrentSkill] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { isAuth } = CaretakerData();
+  const { isAuthenticated: isAuth } = AuthData();
 
   const handleChange = (e) => {
     const { name, value } = e.target;

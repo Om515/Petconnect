@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
 import adminRouter from "./Routes/adminRouter.js";
 import CaretakerRouter from "./Routes/caretakerRoutes.js";
+import authRouter from "./Routes/authRouter.js";
 import cloudinary from "cloudinary"
 
 dotenv.config();
@@ -33,6 +34,7 @@ app.use(cors())
 connectDB();
 
 // api endpoints
+app.use("/api/auth", authRouter);
 app.use("/api/user",userRouter)
 app.use("/api/admin",adminRouter)
 app.use("/api/caretaker",CaretakerRouter)

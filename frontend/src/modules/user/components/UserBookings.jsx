@@ -1,11 +1,11 @@
 // src/components/User/UserBookings.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { UserData } from "../context/UserContext";
+import { AuthData } from "../../../context/AuthContext";
 import { Calendar, Clock, CheckCircle2, XCircle, Clock4 } from "lucide-react";
 
 const UserBookings = () => {
-  const { isAuth } = UserData();
+  const { isAuthenticated: isAuth } = AuthData();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
