@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { UserData } from '../modules/user/context/UserContext';
+import { AuthData } from '../context/AuthContext';
 import { AdminData } from '../modules/admin/context/AdminContext';
 
 // Layouts
@@ -28,7 +28,6 @@ import UserBookings from '../modules/user/components/UserBookings';
 // Migrated Caretaker Modules
 import CaretakerHome from '../modules/caretaker/pages/Home';
 import CaretakerLogin from '../modules/caretaker/components/CaretakerLogin';
-import CaretakerSignUp from '../modules/caretaker/components/CaretakerSignUp';
 import CaretakerApplicationForm from '../modules/caretaker/components/CaretakerApplicationForm';
 import CaretakerProfile from '../modules/caretaker/components/CaretakerProfile';
 import CaretakerAboutUs from '../modules/caretaker/components/AboutUs';
@@ -44,7 +43,7 @@ import Sidebar from '../modules/admin/pages/Sidebar';
 import PetList from '../modules/admin/pages/PetList';
 
 const AppRoutes = () => {
-  const { isAuth } = UserData();
+  const { isAuthenticated, role, loading } = AuthData();
   const { isAuthAdmin } = AdminData();
 
   return (
@@ -54,16 +53,16 @@ const AppRoutes = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/sell-pet" element={isAuth ? <SellPets /> : <Navigate to="/login" />} />
-        <Route path="/buy-pet" element={isAuth ? <BuyPets /> : <Navigate to="/login" />} />
+        <Route path="/sell-pet" element={(isAuthenticated && role === "user") ? <SellPets /> : <Navigate to="/login" />} />
+        <Route path="/buy-pet" element={(isAuthenticated && role === "user") ? <BuyPets /> : <Navigate to="/login" />} />
         <Route path="/pet-details/:petId" element={<PetDetails />} />
-        <Route path="/profile" element={isAuth ? <UserProfile /> : <Navigate to="/login" />} />
+        <Route path="/profile" element={(isAuthenticated && role === "user") ? <UserProfile /> : <Navigate to="/login" />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
-        <Route path="/caretakers" element={isAuth ? <CaretakerList /> : <Navigate to="/login" />} />
-        <Route path="/caretakers/:id" element={isAuth ? <UserCaretakerProfile /> : <Navigate to="/login" />} />
+        <Route path="/caretakers" element={(isAuthenticated && role === "user") ? <CaretakerList /> : <Navigate to="/login" />} />
+        <Route path="/caretakers/:id" element={(isAuthenticated && role === "user") ? <UserCaretakerProfile /> : <Navigate to="/login" />} />
         <Route path="/user/bookings" element={<UserBookings />} />
       </Route>
 
@@ -71,7 +70,7 @@ const AppRoutes = () => {
       <Route path="/caretaker" element={<CaretakerLayout />}>
         <Route index element={<CaretakerHome />} />
         <Route path="login" element={<CaretakerLogin />} />
-        <Route path="signup" element={<CaretakerSignUp />} />
+        <Route path="signup" element={<Signup />} />
         <Route path="apply" element={<CaretakerApplicationForm />} />
         <Route path="profile" element={<CaretakerProfile />} />
         <Route path="about" element={<CaretakerAboutUs />} />

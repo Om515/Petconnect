@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { CaretakerData } from "../context/CaretakerContext" ;
+import { AuthData } from "../../../context/AuthContext";
 
 const Login = () => {
   const [user, setUser] = useState({
@@ -10,7 +10,7 @@ const Login = () => {
   });
 
   const navigate = useNavigate();
-  const { loginUser, btnLoading } = CaretakerData();
+  const { login, btnLoading } = AuthData();
 
   const handleChange = (e) => {
     let name = e.target.name;
@@ -26,7 +26,7 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    loginUser(user.email, user.password, navigate);
+    login(user.email, user.password);
   };
 
   const togglePasswordVisibility = () => {

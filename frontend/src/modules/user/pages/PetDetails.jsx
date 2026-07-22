@@ -10,23 +10,29 @@ import {
   Heart,
   Share2,
 } from "lucide-react";
-import { UserData } from "../context/UserContext";
-
+import axios from "axios";
+import { toast } from "react-hot-toast";
 const PetDetails = () => {
   const { petId } = useParams();
   const [petDetails, setPetDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { bookPet } = UserData();
-
-  const navigate = useNavigate();
-
-  const handleBookPet = () => {
+  const handleBookPet = async () => {
     if (!petId) {
       toast.error("Invalid pet ID");
       return;
     }
-    bookPet(petId, navigate); // Pass petId and navigate
+    try {
+        const { data } = await axios.post("/api/user/book-pet",{petId});
+        if(data.success === true){
+            toast.success(data.message);
+            navigate("/buy-pet");
+        } else {
+            toast.error(data.message);
+        }
+    } catch (error) {
+        toast.error("An error occurred. Please try again.");
+    }
   };
   
 

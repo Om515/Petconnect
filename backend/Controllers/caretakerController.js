@@ -6,6 +6,7 @@ import caretakerModel from "../Models/caretakerModel.js";
 import { BookingRequest } from "../Models/bookingRequestModel.js";
 import { CaretakerApplication } from "../Models/caretakerApplicationModel.js";
 import userModel from "../Models/userModel.js"; // Add this
+import { register, login } from "./authController.js";
 
 
 const createWebToken = (user, res) => {
@@ -26,68 +27,13 @@ const createWebToken = (user, res) => {
 
 
 const loginCaretaker = async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await caretakerModel.findOne({ email });
-
-    if (!user) {
-      return res.json({ success: false, message: "User does not exist" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.json({ success: false, message: "Wrong password or email" });
-    }
-
-    createWebToken(user, res);
-    res.json({ success: true, user, message: "Logged In" });
-  } catch (error) {
-    console.log("Error in userController login : ", error);
-    res.json({ success: false, message: "Error" });
-  }
+  return login(req, res);
 };
 
 
 const registerCaretaker = async (req, res) => {
-  const { name, mobile, address, email, password } = req.body;
-
-  try {
-    //checking user already exists or not
-    const exists = await caretakerModel.findOne({ email });
-    if (exists) {
-      return res.json({ success: false, message: "User already exists" });
-    }
-
-    //validing email and strong password
-    if (!validator.isEmail(email)) {
-      return res.json({ success: false, message: "Please Enter valid email" });
-    }
-
-    if (password.length < 6) {
-      return res.json({
-        success: false,
-        message: "Please Enter strong password",
-      });
-    }
-
-    //hashing user password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const newUser = new caretakerModel({
-      name: name,
-      email: email,
-      password: hashedPassword,
-    });
-
-    const user = await newUser.save();
-    createWebToken(user, res);
-    res.json({ success: true, user, message: "Registered Successfully" });
-  
-  } catch (error) {
-    console.log("userController registerUser error: ", error);
-    res.json({ success: false, message: "Error" });
-  }
+  req.body.role = "caretaker";
+  return register(req, res);
 };
 
 
@@ -145,9 +91,13 @@ const myProfile = async (req, res) => {
     const id = req.user._id;
 
     // Get base user info
-    const user = await caretakerModel.findById(id)
-      .select("name email")
+    const user = await userModel.findById(id)
+      .select("name email role")
       .lean();
+
+    if (!user || user.role !== "caretaker") {
+      return res.status(401).json({ success: false, message: "Unauthorized profile access" });
+    }
 
     // Get application info if exists
     const application = await CaretakerApplication.findOne({ applicant: id })

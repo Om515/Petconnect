@@ -9,6 +9,7 @@ import cloudinary from "cloudinary";
 import { petOrder } from "../Models/petModel.js";
 import { BookingRequest } from "../Models/bookingRequestModel.js";
 import caretakerModel from "../Models/caretakerModel.js";
+import { register, login } from "./authController.js";
 
 // Existing functions (DO NOT MODIFY)
 const createWebToken = (user, res) => {
@@ -28,65 +29,12 @@ const createWebToken = (user, res) => {
 };
 
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await userModel.findOne({ email });
-
-    if (!user) {
-      return res.json({ success: false, message: "User does not exist" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.json({ success: false, message: "Wrong password or email" });
-    }
-
-    createWebToken(user, res);
-    res.json({ success: true, user, message: "Logged In" });
-  } catch (error) {
-    console.log("Error in userController login : ", error);
-    res.json({ success: false, message: "Error" });
-  }
+  return login(req, res);
 };
 
 const registerUser = async (req, res) => {
-  const { name, mobile, address, email, password } = req.body;
-
-  try {
-    const exists = await userModel.findOne({ email });
-    if (exists) {
-      return res.json({ success: false, message: "User already exists" });
-    }
-
-    if (!validator.isEmail(email)) {
-      return res.json({ success: false, message: "Please Enter valid email" });
-    }
-
-    if (password.length < 6) {
-      return res.json({
-        success: false,
-        message: "Please Enter strong password",
-      });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const newUser = new userModel({
-      name: name,
-      email: email,
-      mobile: mobile,
-      address: address,
-      password: hashedPassword,
-    });
-
-    const user = await newUser.save();
-    createWebToken(user, res);
-    res.json({ success: true, user, message: "Registered Successfully" });
-  } catch (error) {
-    console.log("userController registerUser error: ", error);
-    res.json({ success: false, message: "Error" });
-  }
+  req.body.role = "user";
+  return register(req, res);
 };
 
 const logoutUser = async (req, res) => {

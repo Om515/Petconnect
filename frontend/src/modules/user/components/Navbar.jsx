@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import { UserData } from "../context/UserContext";
+import { AuthData } from "../../../context/AuthContext";
 import assests from "../assets/assests";
 import { MdPerson } from "react-icons/md";
 
@@ -9,11 +9,12 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
-  const { isAuth, logoutHandler, fetchUser } = UserData();
+  const { fetchCurrentUser } = AuthData();
+  const { isAuthenticated, logout } = AuthData();
   const [bookingCount, setBookingCount] = useState(0);
 
   useEffect(() => {
-    fetchUser();
+    fetchCurrentUser();
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
@@ -23,7 +24,7 @@ const Navbar = () => {
 
   // Fetch booking count when authenticated
   useEffect(() => {
-    if (isAuth) {
+    if (isAuthenticated) {
       const fetchBookingCount = async () => {
         try {
           const response = await fetch("/api/user/bookings", {
@@ -39,10 +40,10 @@ const Navbar = () => {
       };
       fetchBookingCount();
     }
-  }, [isAuth]);
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
-    logoutHandler();
+    logout();
     setIsOpen(false);
     setBookingCount(0);
   };
@@ -78,7 +79,7 @@ const Navbar = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden sm:flex items-center gap-4">
-            {isAuth ? (
+            {isAuthenticated ? (
               <>
                 <button
                   onClick={() => navigate("/profile")}
@@ -167,7 +168,7 @@ const Navbar = () => {
             </Link>
           ))}
           
-          {isAuth ? (
+          {isAuthenticated ? (
             <>
               <Link
                 to="/profile"
