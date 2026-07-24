@@ -9,10 +9,9 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const { fetchCurrentUser } = AuthData();
-  const { isAuthenticated, logout } = AuthData();
+  const { isAuthenticated, logout, role } = AuthData();
 
   useEffect(() => {
-    fetchCurrentUser();
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
@@ -50,7 +49,7 @@ const Navbar = () => {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-6 items-center">
-          {isAuthenticated ? (
+          {isAuthenticated && role === "caretaker" ? (
             <div className="flex items-center space-x-4">
               {/* Apply as Caretaker Button */}
               <Link
@@ -120,7 +119,7 @@ const Navbar = () => {
         }`}
       >
         <div className="flex flex-col space-y-4 p-6 bg-cyan-600 bg-opacity-95 backdrop-blur-sm rounded-b-xl shadow-xl">
-          {isAuthenticated && (
+          {isAuthenticated && role === "caretaker" && (
             <>
               {/* Apply as Caretaker (Mobile) */}
               <Link
@@ -155,7 +154,7 @@ const Navbar = () => {
             </>
           )}
 
-          {!isAuthenticated && (
+          {(!isAuthenticated || role !== "caretaker") && (
             <div className="flex flex-col space-y-3 pt-2">
               <button
                 onClick={() => {

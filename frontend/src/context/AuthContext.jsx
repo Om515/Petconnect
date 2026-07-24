@@ -93,36 +93,27 @@ export const AuthProvider = ({ children }) => {
   };
 
   const fetchCurrentUser = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      let response = await axios.get("/api/user/myinfo");
-      
-      if (response.data.success !== true) {
-        const caretakerResponse = await axios.get("/api/caretaker/myinfo");
-        if (caretakerResponse.data.success === true) {
-            response = caretakerResponse;
-        }
-      }
-
-      const { data } = response;
-      
+      const { data } = await axios.get("/api/user/myinfo");
       if (data.success === true) {
-        setUser(data.user);
-        setRole(data.user?.role || data.role);
-        setIsAuthenticated(true);
-      } else {
-        setUser(null);
-        setRole(null);
-        setIsAuthenticated(false);
+        setUser(data.user); setRole(data.user.role); setIsAuthenticated(true);
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error(error);
-      setUser(null);
-      setRole(null);
-      setIsAuthenticated(false);
-    } finally {
-      setLoading(false);
-    }
+    } catch (_) {}
+
+    try {
+      const { data } = await axios.get("/api/caretaker/myinfo");
+      if (data.success === true) {
+        setUser(data.user); setRole("caretaker"); setIsAuthenticated(true);
+        setLoading(false);
+        return;
+      }
+    } catch (_) {}
+
+    setUser(null); setRole(null); setIsAuthenticated(false);
+    setLoading(false);
   };
 
   return (
