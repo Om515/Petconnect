@@ -46,13 +46,17 @@ const AppRoutes = () => {
   const { isAuthenticated, role, loading } = AuthData();
   const { isAuthAdmin } = AdminData();
 
+  if (loading) return <div>Loading...</div>;
+
+  const roleHome = role === "caretaker" ? "/caretaker" : role === "admin" ? "/admin" : "/";
+
   return (
     <Routes>
       {/* Old Frontend Routes attached to UserLayout */}
       <Route element={<UserLayout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={isAuthenticated ? <Navigate to={roleHome} /> : <Login />} />
+        <Route path="/signup" element={isAuthenticated ? <Navigate to={roleHome} /> : <Signup />} />
         <Route path="/sell-pet" element={(isAuthenticated && role === "user") ? <SellPets /> : <Navigate to="/login" />} />
         <Route path="/buy-pet" element={(isAuthenticated && role === "user") ? <BuyPets /> : <Navigate to="/login" />} />
         <Route path="/pet-details/:petId" element={<PetDetails />} />
@@ -69,10 +73,10 @@ const AppRoutes = () => {
       {/* Caretaker Routes */}
       <Route path="/caretaker" element={<CaretakerLayout />}>
         <Route index element={<CaretakerHome />} />
-        <Route path="login" element={<CaretakerLogin />} />
-        <Route path="signup" element={<Signup />} />
-        <Route path="apply" element={<CaretakerApplicationForm />} />
-        <Route path="profile" element={<CaretakerProfile />} />
+        <Route path="login" element={isAuthenticated ? <Navigate to={roleHome} /> : <CaretakerLogin />} />
+        <Route path="signup" element={isAuthenticated ? <Navigate to={roleHome} /> : <Signup />} />
+        <Route path="apply" element={(isAuthenticated && role === "caretaker") ? <CaretakerApplicationForm /> : <Navigate to="/caretaker/login" />} />
+        <Route path="profile" element={(isAuthenticated && role === "caretaker") ? <CaretakerProfile /> : <Navigate to="/caretaker/login" />} />
         <Route path="about" element={<CaretakerAboutUs />} />
         <Route path="contact" element={<CaretakerContact />} />
         <Route path="privacy" element={<CaretakerPrivacyPolicy />} />

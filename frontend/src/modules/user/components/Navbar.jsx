@@ -10,11 +10,10 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const { fetchCurrentUser } = AuthData();
-  const { isAuthenticated, logout } = AuthData();
+  const { isAuthenticated, logout, role } = AuthData();
   const [bookingCount, setBookingCount] = useState(0);
 
   useEffect(() => {
-    fetchCurrentUser();
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
@@ -79,7 +78,7 @@ const Navbar = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden sm:flex items-center gap-4">
-            {isAuthenticated ? (
+            {isAuthenticated && role === "user" ? (
               <>
                 <button
                   onClick={() => navigate("/profile")}
@@ -168,7 +167,7 @@ const Navbar = () => {
             </Link>
           ))}
           
-          {isAuthenticated ? (
+          {isAuthenticated && role === "user" ? (
             <>
               <Link
                 to="/profile"

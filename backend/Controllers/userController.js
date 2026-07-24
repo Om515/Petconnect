@@ -408,7 +408,7 @@ const updateAddress = async(req,res) =>{
     res.json({ success:true, message:"Address updated successfully"});
   } catch (error) {
     console.log("Error in updateAddress :",error);
-    res.json({ success:FontFaceSetLoadEvent, message:"Internal server Error"});
+    res.json({ success: false, message: "Internal server Error" });
   }
 }
 

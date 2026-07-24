@@ -9,6 +9,7 @@ import adminRouter from "./Routes/adminRouter.js";
 import CaretakerRouter from "./Routes/caretakerRoutes.js";
 import authRouter from "./Routes/authRouter.js";
 import cloudinary from "cloudinary"
+import seedAdmin from "./Seed/adminSeeder.js";
 
 dotenv.config();
 
@@ -31,7 +32,9 @@ app.use(cookieParser())
 app.use(cors())
 
 // db connection
-connectDB();
+connectDB().then(() => {
+    seedAdmin();
+});
 
 // api endpoints
 app.use("/api/auth", authRouter);
