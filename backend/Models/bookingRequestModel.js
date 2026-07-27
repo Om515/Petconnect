@@ -9,7 +9,7 @@ const bookingRequestSchema = new mongoose.Schema(
     },
     caretaker: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Caretaker",
+      ref: "user",
       required: true,
     },
     service: {

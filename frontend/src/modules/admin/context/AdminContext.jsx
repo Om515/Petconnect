@@ -98,10 +98,37 @@ export const AdminProvider = ({ children }) => {
       
     } catch (error) {
       toast.error("Error");
-      console.log("Error in petApprove",error);
+      console.log("Error in petReject",error);
     }
   }
 
+  async function caretakerApprove(id, navigate) {
+    try {
+      const { data } = await axios.post("/api/admin/approve-caretaker", { id });
+
+      if (data.success === true) {
+        toast.success(data.message);
+        if (navigate) navigate("/admin/caretaker-list");
+      }
+    } catch (error) {
+      toast.error("Error approving caretaker application");
+      console.log("Error in caretakerApprove", error);
+    }
+  }
+
+  async function caretakerReject(id, navigate) {
+    try {
+      const { data } = await axios.post("/api/admin/reject-caretaker", { id });
+
+      if (data.success === true) {
+        toast.success(data.message);
+        if (navigate) navigate("/admin/caretaker-list");
+      }
+    } catch (error) {
+      toast.error("Error rejecting caretaker application");
+      console.log("Error in caretakerReject", error);
+    }
+  }
 
   //useEffect to load the data
   useEffect(() => {
@@ -120,7 +147,9 @@ export const AdminProvider = ({ children }) => {
         fetchAdmin,
         setIsAuthAdmin,
         petApprove,
-        petReject
+        petReject,
+        caretakerApprove,
+        caretakerReject
       }}
     >
       {children}

@@ -8,30 +8,43 @@ const authenticate = (allowedRoles) => async (req, res, next) => {
       : req.cookies.user_token;
 
     if (!token) {
-      return res.json({ success: false, message: "Please Login" });
+      return res.status(401).json({ success: false, message: "Please Login" });
     }
 
-    const decodedData = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (!decodedData) {
-      return res.json({ success: false, message: "Token expired" });
+    let decodedData;
+    try {
+      decodedData = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      return res.status(401).json({ success: false, message: "Token expired or invalid" });
     }
 
-    req.user = await userModel.findById(decodedData.id).select("-password");
+    if (!decodedData || !decodedData.id) {
+      return res.status(401).json({ success: false, message: "Token expired" });
+    }
 
-    if (!req.user) {
+    let user;
+    try {
+      user = await userModel.findById(decodedData.id).select("-password");
+    } catch (dbError) {
+      console.error("Database query failed in authenticate middleware:", dbError);
+      return res.status(500).json({ success: false, message: "Database connection error. Please try again." });
+    }
+
+    if (!user) {
       return res.status(401).json({ success: false, message: "User not found" });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+    if (!allowedRoles.includes(user.role)) {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
+    req.user = user;
     next();
   } catch (error) {
-    console.log("Error in authenticate middleware:", error);
-    return res.json({ success: false, message: "Authentication Error" });
+    console.error("Error in authenticate middleware:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
 export default authenticate;
+

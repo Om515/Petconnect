@@ -3,6 +3,7 @@ import {
   List,
   ShoppingCart,
   Clock,
+  UserCheck,
   Menu,
   X,
 } from "lucide-react";
@@ -49,12 +50,19 @@ const Sidebar = () => {
             </li>
 
             <li className="hover:bg-gray-100 rounded-lg transition duration-300">
+              <Link to="/admin/caretaker-list" className="flex px-5 py-3 items-center">
+                <UserCheck className="mr-3 text-teal-600" size={20} />
+                <span className="text-gray-700 font-medium">Pending Caretakers</span>
+              </Link>
+            </li>
+
+            <li className="hover:bg-gray-100 rounded-lg transition duration-300">
               <Link to="/admin" className="flex px-5 py-3 items-center">
                 <ShoppingCart className="mr-3 text-teal-600" size={20} />
                 <span className="text-gray-700 font-medium">Pets Sold</span>
               </Link>
             </li>
-            
+
             <li className="hover:bg-gray-100 rounded-lg transition duration-300">
               <Link to="/admin" className="flex px-5 py-3 items-center">
                 <Clock className="mr-3 text-teal-600" size={20} />

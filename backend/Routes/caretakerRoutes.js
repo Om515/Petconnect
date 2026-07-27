@@ -1,6 +1,8 @@
 import express from "express";
-import { loginCaretaker, registerCaretaker, logoutCaretaker, myProfile,updateBookingRequestStatus } from "../Controllers/caretakerController.js";
-import { applyAsCaretaker, getMyApplication } from "../Controllers/caretakerApplicationController.js";
+import { loginCaretaker, registerCaretaker, logoutCaretaker } from "../Controllers/auth/caretakerAuth.controller.js";
+import { myProfile } from "../Controllers/caretaker/caretakerProfile.controller.js";
+import { applyAsCaretaker, getMyApplication } from "../Controllers/caretaker/caretakerApplication.controller.js";
+import { updateBookingRequestStatus } from "../Controllers/caretaker/caretakerBooking.controller.js";
 import isAuth from "../Middlewares/isAuth.js";
 import caretakerIsAuth from "../Middlewares/caretakerIsAuth.js";
 
@@ -19,19 +21,10 @@ CaretakerRouter.post("/apply", caretakerIsAuth, (req, res, next) => {
 }, applyAsCaretaker);
 CaretakerRouter.get("/my-applications", caretakerIsAuth, getMyApplication);
 
-
-// Routes/caretakerRouter.js
 CaretakerRouter.post(
   "/booking-request/status",
   caretakerIsAuth,
   updateBookingRequestStatus
 );
 
-CaretakerRouter.get("/myinfo",caretakerIsAuth , myProfile);
-
 export default CaretakerRouter;
-
-
-
-
-// CaretakerRouter.get("/myinfo",caretakerIsAuth , myProfile);
