@@ -34,9 +34,18 @@ const caretakerApplicationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
     applicant: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Caretaker", // Changed to "Caretaker" to match your original model
+      ref: "user",
       required: true,
     },
   },

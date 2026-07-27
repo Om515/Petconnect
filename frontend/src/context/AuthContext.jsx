@@ -95,26 +95,45 @@ export const AuthProvider = ({ children }) => {
   const fetchCurrentUser = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get("/api/user/myinfo");
-      if (data.success === true) {
-        setUser(data.user); setRole(data.user.role); setIsAuthenticated(true);
+      const res = await axios.get("/api/user/myinfo");
+      if (res.data && res.data.success === true) {
+        setUser(res.data.user);
+        setRole(res.data.user?.role || "user");
+        setIsAuthenticated(true);
         setLoading(false);
         return;
       }
-    } catch (_) {}
+    } catch (err) {
+      if (err.response && err.response.status >= 500) {
+        // Server or database error - preserve state and don't logout
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
-      const { data } = await axios.get("/api/caretaker/myinfo");
-      if (data.success === true) {
-        setUser(data.user); setRole("caretaker"); setIsAuthenticated(true);
+      const res = await axios.get("/api/caretaker/myinfo");
+      if (res.data && res.data.success === true) {
+        setUser(res.data.user);
+        setRole("caretaker");
+        setIsAuthenticated(true);
         setLoading(false);
         return;
       }
-    } catch (_) {}
+    } catch (err) {
+      if (err.response && err.response.status >= 500) {
+        // Server or database error - preserve state and don't logout
+        setLoading(false);
+        return;
+      }
+    }
 
-    setUser(null); setRole(null); setIsAuthenticated(false);
+    setUser(null);
+    setRole(null);
+    setIsAuthenticated(false);
     setLoading(false);
   };
+
 
   return (
     <AuthContext.Provider

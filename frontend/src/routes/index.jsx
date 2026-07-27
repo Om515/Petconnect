@@ -41,6 +41,7 @@ import AdminLogin from '../modules/admin/components/LoginAdmin';
 import ManageUsers from '../modules/admin/pages/ManageUsers';
 import Sidebar from '../modules/admin/pages/Sidebar';
 import PetList from '../modules/admin/pages/PetList';
+import CaretakerListAdmin from '../modules/admin/pages/CaretakerListAdmin';
 
 const AppRoutes = () => {
   const { isAuthenticated, role, loading } = AuthData();
@@ -89,6 +90,7 @@ const AppRoutes = () => {
         <Route path="login" element={<AdminLogin />} />
         <Route path="manage-users" element={<ManageUsers />} />
         <Route path="pet-list" element={<PetList />} />
+        <Route path="caretaker-list" element={<CaretakerListAdmin />} />
         <Route path="options" element={
           <>
             {isAuthAdmin ? (
