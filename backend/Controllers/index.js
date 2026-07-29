@@ -3,6 +3,7 @@ export * from "./auth/auth.controller.js";
 export * from "./auth/userAuth.controller.js";
 export * from "./auth/caretakerAuth.controller.js";
 export * from "./auth/adminAuth.controller.js";
+export * from "./auth/password.controller.js";
 
 // User Controllers
 export * from "./user/user.controller.js";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { AdminData } from "../context/AdminContext"; 
 
 const AdminLogin = () => {
@@ -71,6 +71,9 @@ const AdminLogin = () => {
                   <Eye size={20} />
                 )}
               </button>
+            </div>
+            <div className="flex justify-end mt-2">
+              <Link to="/forgot-password" state={{ defaultRole: 'admin' }} className="text-sm text-cyan-600 hover:text-cyan-800 transition-colors hover:underline">Forgot Password?</Link>
             </div>
           </div>
           <button
