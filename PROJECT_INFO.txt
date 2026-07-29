@@ -1,0 +1,244 @@
+================================================================================
+PETCONNECT 🐾 - COMPLETE PROJECT INFORMATION & AI CONTEXT FILE
+================================================================================
+
+PURPOSE OF THIS FILE:
+This text file contains complete, structured technical information about the
+PetConnect project so that any AI reading this file can instantly understand 
+the project architecture, database schemas, API routes, authentication, 
+frontend structure, and business logic to answer questions, suggest 
+improvements, or implement new features.
+
+================================================================================
+1. PROJECT OVERVIEW
+================================================================================
+- Project Name: PetConnect
+- Architecture: MERN Stack Monorepo (MongoDB, Express, React, Node.js)
+- Goal: Full-stack web application connecting Pet Owners (Users), Pet Caretakers, 
+  and Platform Administrators.
+- Core Modules:
+  1. Pet Marketplace (List pets for sale, browse, buy, verify listings)
+  2. Caretaker Services (Apply to be a caretaker, set hourly rate/skills, 
+     accept/reject service bookings)
+  3. Administrative Platform (User management, caretaker approval, pet verification,
+     dashboard metrics)
+
+================================================================================
+2. TECH STACK & CONFIGURATION
+================================================================================
+Backend:
+- Node.js (ES Module system "type": "module")
+- Express.js v4.21.2
+- Database: MongoDB with Mongoose ORM v8.13.0
+- Auth: JWT (jsonwebtoken v9.0.2) + Passwords hashed with bcrypt v5.1.1
+- Middlewares: cookie-parser, body-parser, cors
+- Media Uploads: Multer + DataURI + Cloudinary v2.6.0
+- Server Entry: server.js
+- Default Port: 7001 (or process.env.PORT)
+
+Frontend:
+- React 18 SPA (Single Page Application)
+- Vite Build System
+- Routing: react-router-dom v6
+- State Management: React Context API (AuthContext, AdminContext)
+- Styling: Tailwind CSS + Vanilla CSS
+- Entry Point: src/main.jsx & src/App.jsx
+
+================================================================================
+3. PROJECT FOLDER STRUCTURE
+================================================================================
+petconnect/
+├── PROJECT_CONTEXT.md          # Comprehensive AI documentation (Markdown)
+├── PROJECT_INFO.txt            # Comprehensive AI documentation (Plain Text)
+├── README.md                   # Quickstart instructions
+├── backend/
+│   ├── Config/
+│   │   └── db.js               # MongoDB Mongoose connection & IPv4 DNS config
+│   ├── Controllers/
+│   │   ├── admin/              # Admin logic (admin.controller.js, adminCaretaker.controller.js, adminPet.controller.js, adminUser.controller.js)
+│   │   ├── appointment/        # Booking logic (booking.controller.js)
+│   │   ├── auth/               # Authentication logic (adminAuth, auth, caretakerAuth, userAuth)
+│   │   ├── caretaker/          # Caretaker logic (caretakerApplication, caretakerBooking, caretakerProfile)
+│   │   ├── pet/                # Pet marketplace logic (pet.controller.js)
+│   │   └── user/               # User logic (user, userCaretaker, userProfile)
+│   ├── Middlewares/             # Authentication & role verification middleware
+│   ├── Models/                 # Mongoose Data Schemas
+│   │   ├── adminModel.js
+│   │   ├── bookingRequestModel.js
+│   │   ├── caretakerApplicationModel.js
+│   │   ├── caretakerModel.js
+│   │   ├── imageModel.js
+│   │   ├── petModel.js
+│   │   └── userModel.js
+│   ├── Routes/                 # Express Routers
+│   │   ├── adminRouter.js      # /api/admin
+│   │   ├── authRouter.js       # /api/auth
+│   │   ├── caretakerRoutes.js  # /api/caretaker
+│   │   └── userRouter.js       # /api/user
+│   ├── Seed/
+│   │   └── adminSeeder.js      # Automatically creates default admin user from .env
+│   ├── utils/                  # Cloudinary image helpers, tokens
+│   ├── .env                    # Secret environment variables
+│   ├── package.json
+│   └── server.js               # Main Express application entry point
+│
+└── frontend/
+    ├── src/
+    │   ├── context/            # Global React Contexts (AuthContext.jsx)
+    │   ├── layouts/            # PublicLayout, UserLayout, CaretakerLayout, AdminLayout
+    │   ├── modules/
+    │   │   ├── admin/          # Admin pages & components
+    │   │   ├── caretaker/      # Caretaker pages & components
+    │   │   └── user/           # User pages & components
+    │   ├── routes/
+    │   │   └── index.jsx       # AppRouter and route guards
+    │   ├── App.jsx
+    │   └── main.jsx
+    ├── package.json
+    └── vite.config.js
+
+================================================================================
+4. DATABASE SCHEMAS (MONGOOSE MODELS)
+================================================================================
+1. User Schema (userModel.js):
+   - name: String (Required)
+   - email: String (Required, Unique)
+   - password: String (Required, Hashed)
+   - mobile: String (Required, Unique)
+   - address: String (Required)
+   - role: String (Enum: ["user", "caretaker", "admin"], Default: "user")
+   - timestamps: true
+
+2. Caretaker Application Schema (caretakerApplicationModel.js):
+   - applicant: ObjectId ref user (Required)
+   - fullName: String (Required)
+   - mobile: String (Required)
+   - experience: Number (Years)
+   - skills: [String] (e.g., ["Dog Walking", "Grooming"])
+   - availability: String (Full-time / Part-time)
+   - hourlyRate: Number (Required)
+   - description: String (Required)
+   - status: String (Enum: ["pending", "approved", "rejected"], Default: "pending")
+   - isApproved: Boolean
+   - isVerified: Boolean
+
+3. Pet / PetOrder Schema (petModel.js):
+   - category: String (Required)
+   - type: String (Required)
+   - breed: String (Required)
+   - age: Number (Required)
+   - price: Number (Required)
+   - description: String (Required)
+   - owner: ObjectId ref user (Required)
+   - image: { id: String, url: String } (Cloudinary)
+   - isVerified: Boolean (Default: false)
+   - isApproved: Boolean (Default: false)
+   - soldBool: Boolean (Default: false)
+   - buyer: ObjectId ref user
+
+4. Booking Request Schema (bookingRequestModel.js):
+   - user: ObjectId ref user (Pet Owner)
+   - caretaker: ObjectId ref user (Caretaker)
+   - service: String (Required)
+   - date: Date (Required)
+   - hours: Number (Required)
+   - totalCost: Number (Required)
+   - status: String (Enum: ["pending", "accepted", "rejected"], Default: "pending")
+
+5. Admin Schema (adminModel.js):
+   - name: String
+   - email: String (Unique)
+   - password: String
+   - role: String ("admin")
+
+================================================================================
+5. API ROUTES MAP
+================================================================================
+Auth Routes (/api/auth):
+- POST /api/auth/register : Register new user
+- POST /api/auth/login    : Authenticate user/caretaker/admin
+- GET  /api/auth/me       : Fetch logged-in user profile & role status
+- POST /api/auth/logout   : Clear session / cookies
+
+User Routes (/api/user):
+- GET  /api/user/profile       : Get user profile
+- PUT  /api/user/profile       : Update user profile
+- POST /api/user/sell-pet      : Post a pet listing with image
+- GET  /api/user/pets          : Browse available pets
+- GET  /api/user/pet/:id       : Get pet detail
+- POST /api/user/buy-pet/:id   : Buy a pet
+- GET  /api/user/caretakers    : List approved caretakers
+- POST /api/user/book-caretaker: Book caretaker service
+- GET  /api/user/my-bookings   : View booking history
+
+Caretaker Routes (/api/caretaker):
+- POST /api/caretaker/apply            : Submit application
+- GET  /api/caretaker/profile          : Get caretaker details
+- PUT  /api/caretaker/profile          : Update rates & availability
+- GET  /api/caretaker/bookings         : View booking requests
+- PUT  /api/caretaker/booking/:id/status: Accept/reject booking
+
+Admin Routes (/api/admin):
+- POST /api/admin/login                     : Admin authentication
+- GET  /api/admin/users                     : List registered users
+- DELETE /api/admin/user/:id                : Delete user
+- GET  /api/admin/caretaker-applications    : View caretaker applications
+- PUT  /api/admin/caretaker-application/:id/approve: Approve caretaker
+- PUT  /api/admin/caretaker-application/:id/reject : Reject caretaker
+- GET  /api/admin/pets                      : View all pets
+- PUT  /api/admin/pet/:id/verify            : Approve/verify pet listing
+
+================================================================================
+6. ENVIRONMENT VARIABLES SCHEME (.env)
+================================================================================
+PORT=7001
+MONGO_CONN=mongodb+srv://<user>:<password>@cluster.mongodb.net/petconnect
+JWT_SECRET=your_jwt_secret_key
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+ADMIN_NAME=Admin
+ADMIN_EMAIL=admin@petconnect.com
+ADMIN_PASSWORD=adminpassword123
+
+================================================================================
+7. FRONTEND ROUTING & GUARD MAP
+================================================================================
+User Layout:
+- /               -> Home Page
+- /login, /signup -> Auth Pages
+- /sell-pet       -> Guarded (Role: user)
+- /buy-pet        -> Guarded (Role: user)
+- /pet-details/:id-> Pet Details
+- /profile        -> User Profile (Role: user)
+- /caretakers     -> Caretaker List (Role: user)
+- /user/bookings  -> User Bookings
+
+Caretaker Layout:
+- /caretaker        -> Caretaker Landing
+- /caretaker/login  -> Caretaker Auth
+- /caretaker/apply  -> Caretaker Application (Role: caretaker)
+- /caretaker/profile-> Caretaker Dashboard (Role: caretaker)
+
+Admin Layout:
+- /admin            -> Admin Landing
+- /admin/login      -> Admin Login
+- /admin/manage-users -> User Management
+- /admin/pet-list   -> Pet Verification List
+- /admin/caretaker-list -> Caretaker Review List
+- /admin/options    -> Admin Dashboard
+
+================================================================================
+8. SUGGESTED IMPROVEMENTS & FEATURE ROADMAP (FOR AI ASSISTANTS)
+================================================================================
+1. Payment Integration: Add Stripe / Razorpay / PayPal for automated booking and pet purchase checkouts.
+2. Real-Time Chat: Integrate Socket.io for messaging between pet owners and caretakers.
+3. Ratings & Reviews: Implement a star rating and comment review system for caretakers and pet sellers.
+4. Geolocation Search: Use MongoDB 2dsphere indexes to filter nearby caretakers.
+5. Email/Push Notifications: Send Nodemailer/SendGrid emails on booking status updates.
+6. Validation & Security: Add express-validator or Zod schemas, express-rate-limit, and helmet security headers.
+7. Testing Suite: Implement Jest/Supertest backend tests and Vitest/Cypress frontend tests.
+
+================================================================================
+END OF PROJECT INFORMATION FILE
+================================================================================

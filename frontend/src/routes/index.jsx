@@ -30,6 +30,7 @@ import CaretakerHome from '../modules/caretaker/pages/Home';
 import CaretakerLogin from '../modules/caretaker/components/CaretakerLogin';
 import CaretakerApplicationForm from '../modules/caretaker/components/CaretakerApplicationForm';
 import CaretakerProfile from '../modules/caretaker/components/CaretakerProfile';
+import CompleteProfessionalProfile from '../modules/caretaker/pages/CompleteProfessionalProfile';
 import CaretakerAboutUs from '../modules/caretaker/components/AboutUs';
 import CaretakerContact from '../modules/caretaker/components/Contact';
 import CaretakerPrivacyPolicy from '../modules/caretaker/components/PrivacyPolicy';
@@ -42,6 +43,7 @@ import ManageUsers from '../modules/admin/pages/ManageUsers';
 import Sidebar from '../modules/admin/pages/Sidebar';
 import PetList from '../modules/admin/pages/PetList';
 import CaretakerListAdmin from '../modules/admin/pages/CaretakerListAdmin';
+import AdminProfileReview from '../modules/admin/pages/AdminProfileReview';
 
 const AppRoutes = () => {
   const { isAuthenticated, role, loading } = AuthData();
@@ -78,6 +80,7 @@ const AppRoutes = () => {
         <Route path="signup" element={isAuthenticated ? <Navigate to={roleHome} /> : <Signup />} />
         <Route path="apply" element={(isAuthenticated && role === "caretaker") ? <CaretakerApplicationForm /> : <Navigate to="/caretaker/login" />} />
         <Route path="profile" element={(isAuthenticated && role === "caretaker") ? <CaretakerProfile /> : <Navigate to="/caretaker/login" />} />
+        <Route path="professional-profile" element={(isAuthenticated && role === "caretaker") ? <CompleteProfessionalProfile /> : <Navigate to="/caretaker/login" />} />
         <Route path="about" element={<CaretakerAboutUs />} />
         <Route path="contact" element={<CaretakerContact />} />
         <Route path="privacy" element={<CaretakerPrivacyPolicy />} />
@@ -91,6 +94,7 @@ const AppRoutes = () => {
         <Route path="manage-users" element={<ManageUsers />} />
         <Route path="pet-list" element={<PetList />} />
         <Route path="caretaker-list" element={<CaretakerListAdmin />} />
+        <Route path="profile-reviews" element={<AdminProfileReview />} />
         <Route path="options" element={
           <>
             {isAuthAdmin ? (
