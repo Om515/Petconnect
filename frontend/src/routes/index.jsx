@@ -24,6 +24,7 @@ import TermsOfService from '../modules/user/components/TermsOfService';
 import CaretakerList from '../modules/user/pages/CaretakerList';
 import UserCaretakerProfile from '../modules/user/components/UserCaretakerProfile';
 import UserBookings from '../modules/user/components/UserBookings';
+import ForgotPassword from '../modules/user/components/ForgotPassword';
 
 // Migrated Caretaker Modules
 import CaretakerHome from '../modules/caretaker/pages/Home';
@@ -60,6 +61,7 @@ const AppRoutes = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={isAuthenticated ? <Navigate to={roleHome} /> : <Login />} />
         <Route path="/signup" element={isAuthenticated ? <Navigate to={roleHome} /> : <Signup />} />
+        <Route path="/forgot-password" element={isAuthenticated ? <Navigate to={roleHome} /> : <ForgotPassword />} />
         <Route path="/sell-pet" element={(isAuthenticated && role === "user") ? <SellPets /> : <Navigate to="/login" />} />
         <Route path="/buy-pet" element={(isAuthenticated && role === "user") ? <BuyPets /> : <Navigate to="/login" />} />
         <Route path="/pet-details/:petId" element={<PetDetails />} />

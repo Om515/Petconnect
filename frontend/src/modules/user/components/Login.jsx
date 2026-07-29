@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { AuthData } from "../../../context/AuthContext";
 
 const Login = () => {
@@ -71,6 +71,9 @@ const Login = () => {
                   <Eye size={20} />
                 )}
               </button>
+            </div>
+            <div className="flex justify-end mt-2">
+              <Link to="/forgot-password" state={{ defaultRole: 'user' }} className="text-sm text-cyan-600 hover:text-cyan-800 transition-colors hover:underline">Forgot Password?</Link>
             </div>
           </div>
           <button
