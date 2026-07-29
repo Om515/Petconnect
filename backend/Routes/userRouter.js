@@ -6,7 +6,7 @@ import { sellPet, buyPetList, petInfo, bookPet } from "../Controllers/pet/pet.co
 import { CaretakerList, getCaretakerProfile } from "../Controllers/user/userCaretaker.controller.js";
 import { createBookingRequest, getUserBookings } from "../Controllers/appointment/booking.controller.js";
 import isAuth from "../Middlewares/isAuth.js";
-import uploadFile from "../middlewares/multer.js";
+import uploadFile from "../Middlewares/multer.js";
 
 const userRouter = express.Router();
 

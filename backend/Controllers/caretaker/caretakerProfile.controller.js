@@ -1,6 +1,7 @@
 import userModel from "../../Models/userModel.js";
 import { CaretakerApplication } from "../../Models/caretakerApplicationModel.js";
 import { BookingRequest } from "../../Models/bookingRequestModel.js";
+import { calculateCaretakerStats } from "./caretakerStats.controller.js";
 
 const myProfile = async (req, res) => {
   try {
@@ -22,9 +23,13 @@ const myProfile = async (req, res) => {
 
     // Get booking requests
     const bookingRequests = await BookingRequest.find({ caretaker: id })
-      .populate("user", "name email") // Populate user info
+      .populate("user", "name email")
       .select("service date hours totalCost status createdAt")
+      .sort({ createdAt: -1 })
       .lean();
+
+    // Generate automatic, un-editable real-time stats
+    const stats = await calculateCaretakerStats(id);
 
     // Combine data
     const profileData = {
@@ -38,6 +43,7 @@ const myProfile = async (req, res) => {
       description: application?.description || "",
       hasApplication: !!application,
       bookingRequests: bookingRequests || [],
+      stats, // Read-only aggregated statistics
     };
 
     res.json({ success: true, user: profileData });

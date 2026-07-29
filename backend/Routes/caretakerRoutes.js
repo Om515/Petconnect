@@ -6,6 +6,9 @@ import { updateBookingRequestStatus } from "../Controllers/caretaker/caretakerBo
 import isAuth from "../Middlewares/isAuth.js";
 import caretakerIsAuth from "../Middlewares/caretakerIsAuth.js";
 
+import { getMyProfessionalProfile, updateProfessionalProfile } from "../Controllers/caretaker/professionalProfile.controller.js";
+import { getMyCaretakerStats } from "../Controllers/caretaker/caretakerStats.controller.js";
+
 const CaretakerRouter = express.Router();
 
 // Existing routes
@@ -13,6 +16,11 @@ CaretakerRouter.post("/signup", registerCaretaker);
 CaretakerRouter.post("/login", loginCaretaker);
 CaretakerRouter.get("/logout", logoutCaretaker);
 CaretakerRouter.get("/myinfo", caretakerIsAuth, myProfile);
+CaretakerRouter.get("/stats", caretakerIsAuth, getMyCaretakerStats);
+
+// Professional Profile routes
+CaretakerRouter.get("/professional-profile", caretakerIsAuth, getMyProfessionalProfile);
+CaretakerRouter.post("/professional-profile", caretakerIsAuth, updateProfessionalProfile);
 
 // New caretaker application routes
 CaretakerRouter.post("/apply", caretakerIsAuth, (req, res, next) => {
