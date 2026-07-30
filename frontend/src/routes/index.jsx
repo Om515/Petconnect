@@ -62,6 +62,7 @@ const AppRoutes = () => {
         <Route path="/login" element={isAuthenticated ? <Navigate to={roleHome} /> : <Login />} />
         <Route path="/signup" element={isAuthenticated ? <Navigate to={roleHome} /> : <Signup />} />
         <Route path="/forgot-password" element={isAuthenticated ? <Navigate to={roleHome} /> : <ForgotPassword />} />
+        <Route path="/apply-caretaker" element={(isAuthenticated && role === "user") ? <CaretakerApplicationForm /> : <Navigate to="/login" />} />
         <Route path="/sell-pet" element={(isAuthenticated && role === "user") ? <SellPets /> : <Navigate to="/login" />} />
         <Route path="/buy-pet" element={(isAuthenticated && role === "user") ? <BuyPets /> : <Navigate to="/login" />} />
         <Route path="/pet-details/:petId" element={<PetDetails />} />

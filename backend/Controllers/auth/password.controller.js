@@ -131,3 +131,30 @@ export const resetPassword = async (req, res) => {
     res.json({ success: false, message: "Internal server error." });
   }
 };
+
+// Endpoint 4: Set Password (For Google Users)
+export const setPassword = async (req, res) => {
+  const { newPassword } = req.body;
+  if (!newPassword) return res.json({ success: false, message: "New password is required." });
+  
+  if (newPassword.length < 6) {
+    return res.json({ success: false, message: "Password must be at least 6 characters long." });
+  }
+
+  try {
+    // req.user is populated by the authenticate middleware
+    const user = await userModel.findById(req.user._id);
+    if (!user) return res.json({ success: false, message: "User not found." });
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;
+    await user.save({ validateModifiedOnly: true });
+
+    res.json({ success: true, message: "Password set successfully! You can now log in using your email and password." });
+  } catch (error) {
+    console.error("setPassword error:", error);
+    res.json({ success: false, message: "Internal server error." });
+  }
+};

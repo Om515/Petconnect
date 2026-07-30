@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthData } from "../../../context/AuthContext";
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
   const [user, setUser] = useState({
@@ -10,7 +11,7 @@ const Login = () => {
   });
 
   const navigate = useNavigate();
-  const { login, btnLoading } = AuthData();
+  const { login, loginWithGoogle, btnLoading } = AuthData();
 
   const handleChange = (e) => {
     let name = e.target.name;
@@ -90,6 +91,27 @@ const Login = () => {
               "Login"
             )}
           </button>
+          
+          <div className="flex items-center my-4">
+            <div className="flex-grow border-t border-gray-300"></div>
+            <span className="px-3 text-sm text-gray-500">or</span>
+            <div className="flex-grow border-t border-gray-300"></div>
+          </div>
+          
+          <div className="flex justify-center w-full">
+            <GoogleLogin
+              onSuccess={credentialResponse => {
+                loginWithGoogle(credentialResponse.credential);
+              }}
+              onError={() => {
+                console.log('Login Failed');
+              }}
+              theme="outline"
+              size="large"
+              shape="pill"
+            />
+          </div>
+
         </form>
         <p className="text-center text-cyan-600 mt-4">
           Don't have an account? <a href="/signup" className="text-cyan-500 font-semibold hover:underline">Sign up</a>

@@ -5,6 +5,7 @@ import { applyAsCaretaker, getMyApplication } from "../Controllers/caretaker/car
 import { updateBookingRequestStatus } from "../Controllers/caretaker/caretakerBooking.controller.js";
 import isAuth from "../Middlewares/isAuth.js";
 import caretakerIsAuth from "../Middlewares/caretakerIsAuth.js";
+import authenticate from "../Middlewares/authenticate.js";
 
 import { getMyProfessionalProfile, updateProfessionalProfile } from "../Controllers/caretaker/professionalProfile.controller.js";
 import { getMyCaretakerStats } from "../Controllers/caretaker/caretakerStats.controller.js";
@@ -23,11 +24,11 @@ CaretakerRouter.get("/professional-profile", caretakerIsAuth, getMyProfessionalP
 CaretakerRouter.post("/professional-profile", caretakerIsAuth, updateProfessionalProfile);
 
 // New caretaker application routes
-CaretakerRouter.post("/apply", caretakerIsAuth, (req, res, next) => {
+CaretakerRouter.post("/apply", authenticate(["user", "caretaker"]), (req, res, next) => {
   console.log("Reached /api/caretaker/apply");
   next();
 }, applyAsCaretaker);
-CaretakerRouter.get("/my-applications", caretakerIsAuth, getMyApplication);
+CaretakerRouter.get("/my-applications", authenticate(["user", "caretaker"]), getMyApplication);
 
 CaretakerRouter.post(
   "/booking-request/status",

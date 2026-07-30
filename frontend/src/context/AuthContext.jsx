@@ -50,6 +50,41 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (credential) => {
+    setBtnLoading(true);
+    try {
+      const { data } = await axios.post("/api/auth/google-login", { credential });
+      
+      if (data.success === true) {
+        toast.success(data.message);
+        setUser(data.user);
+        setRole(data.role);
+        setIsAuthenticated(true);
+        setBtnLoading(false);
+        
+        if (data.role === "caretaker") {
+          navigate("/caretaker");
+        } else if (data.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      } else {
+        toast.error(data.message);
+        setUser(null);
+        setRole(null);
+        setIsAuthenticated(false);
+        setBtnLoading(false);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Google Login failed");
+      setUser(null);
+      setRole(null);
+      setIsAuthenticated(false);
+      setBtnLoading(false);
+    }
+  };
+
   const register = async (name, mobile, address, email, password, role) => {
     setBtnLoading(true);
     try {
@@ -144,6 +179,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         btnLoading,
         login,
+        loginWithGoogle,
         register,
         logout,
         fetchCurrentUser,
