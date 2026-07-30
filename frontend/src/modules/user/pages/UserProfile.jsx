@@ -14,8 +14,9 @@ import {
   MapPin,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import EditProfileModal from "./EditProfileModal"; // Import the profile edit component
-import EditAddressModal from "./EditAddressModal"; // Import the address edit component
+import EditProfileModal from "./EditProfileModal"; 
+import EditAddressModal from "./EditAddressModal"; 
+import SetPasswordModal from "./SetPasswordModal";
 import toast from "react-hot-toast"
 
 export default function UserProfile() {
@@ -24,6 +25,8 @@ export default function UserProfile() {
   const [activeTab, setActiveTab] = useState("profile");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showSetPasswordModal, setShowSetPasswordModal] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,10 +34,18 @@ export default function UserProfile() {
   }, []);
 
   const fetchUserData = () => {
-    axios
-      .get("/api/user/user-profile")
-      .then((response) => {
-        setUserData(response.data);
+    setLoading(true);
+    Promise.all([
+      axios.get("/api/user/user-profile"),
+      axios.get("/api/caretaker/my-applications").catch(() => ({ data: { success: false, applications: [] } }))
+    ])
+      .then(([profileRes, appRes]) => {
+        setUserData(profileRes.data);
+        if (appRes.data?.success && appRes.data.applications?.length > 0) {
+           // Get the latest application status
+           const latest = appRes.data.applications[appRes.data.applications.length - 1];
+           setApplicationStatus(latest.status); // "pending", "approved", or "rejected"
+        }
         setLoading(false);
       })
       .catch((error) => {
@@ -105,6 +116,12 @@ export default function UserProfile() {
           address={user.address}
           onClose={() => setShowAddressModal(false)}
           onUpdate={handleAddressUpdate}
+        />
+      )}
+
+      {showSetPasswordModal && (
+        <SetPasswordModal
+          onClose={() => setShowSetPasswordModal(false)}
         />
       )}
 
@@ -182,9 +199,18 @@ export default function UserProfile() {
                     <span className="font-medium w-24 text-cyan-700">
                       Mobile:
                     </span>
-                    <span>{user.mobile}</span>
+                    <span>{user.mobile || "Not specified."}</span>
                   </div>
                 </div>
+
+                {user.authProvider === 'google' && (
+                  <button 
+                    onClick={() => setShowSetPasswordModal(true)}
+                    className="mt-6 w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 text-sm font-medium transition duration-200 shadow-md flex items-center justify-center cursor-pointer"
+                  >
+                    Create Email Password
+                  </button>
+                )}
               </div>
               <div className="bg-white p-6 rounded-lg shadow-sm border border-cyan-100">
                 <div className="flex justify-between items-center mb-4">
@@ -205,11 +231,36 @@ export default function UserProfile() {
               <div className="md:col-span-2">
                 <button 
                   onClick={() => setShowEditModal(true)}
-                  className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition duration-200 flex items-center"
+                  className="px-6 py-3 w-full justify-center bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition duration-200 flex items-center shadow-sm"
                 >
                   <Edit className="w-5 h-5 mr-2" /> Edit Profile
                 </button>
               </div>
+
+              {/* Promotional Box for Caretaker Upgrade */}
+              {user.role === 'user' && (
+                <div className="md:col-span-2 mt-4 bg-gradient-to-r from-orange-400 to-amber-500 p-6 rounded-lg shadow-md text-white flex flex-col md:flex-row items-center justify-between transition-transform transform">
+                  <div>
+                    <h3 className="text-xl font-bold mb-1">Become a Caretaker!</h3>
+                    <p className="opacity-90">Start earning by helping pet owners in your area with their furry friends.</p>
+                  </div>
+                  <div className="mt-4 md:mt-0 flex-shrink-0">
+                    {!applicationStatus ? (
+                      <button onClick={() => navigate("/apply-caretaker")} className="px-6 py-2 bg-white text-orange-600 font-bold rounded-full shadow hover:bg-orange-50 transition cursor-pointer">
+                        Apply Now
+                      </button>
+                    ) : applicationStatus === "pending" ? (
+                      <span className="px-6 py-2 bg-white/20 border border-white font-bold rounded-full text-white cursor-not-allowed">
+                        Application Pending
+                      </span>
+                    ) : applicationStatus === "rejected" ? (
+                      <button onClick={() => navigate("/apply-caretaker")} className="px-6 py-2 bg-red-600 border border-white text-white font-bold rounded-full shadow hover:bg-red-700 transition cursor-pointer">
+                        Rejected - Apply Again
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

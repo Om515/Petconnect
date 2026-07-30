@@ -3,9 +3,13 @@ import userModel from "../Models/userModel.js";
 
 const authenticate = (allowedRoles) => async (req, res, next) => {
   try {
-    const token = allowedRoles.includes("caretaker")
-      ? req.cookies.caretaker_token
-      : req.cookies.user_token;
+    let token;
+    
+    if (allowedRoles.includes("caretaker") && allowedRoles.includes("user")) {
+       token = req.cookies.caretaker_token || req.cookies.user_token;
+    } else {
+       token = allowedRoles.includes("caretaker") ? req.cookies.caretaker_token : req.cookies.user_token;
+    }
 
     if (!token) {
       return res.status(401).json({ success: false, message: "Please Login" });

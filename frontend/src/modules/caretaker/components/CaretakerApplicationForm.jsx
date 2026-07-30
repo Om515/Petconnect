@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { AuthData } from '../../../context/AuthContext';
 
 const CaretakerApplicationForm = () => {
+  const { isAuthenticated: isAuth, user } = AuthData();
+
   const [formData, setFormData] = useState({
-    fullName: '',
-    mobile: '',
+    fullName: user?.name || '',
+    mobile: user?.mobile || '',
     experience: '',
     skills: [],
     availability: 'Full-time',
@@ -16,7 +18,6 @@ const CaretakerApplicationForm = () => {
   const [currentSkill, setCurrentSkill] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated: isAuth } = AuthData();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
