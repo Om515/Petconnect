@@ -5,6 +5,7 @@ import { userAllInfo } from "../Controllers/user/user.controller.js";
 import { sellPet, buyPetList, petInfo, bookPet } from "../Controllers/pet/pet.controller.js";
 import { CaretakerList, getCaretakerProfile } from "../Controllers/user/userCaretaker.controller.js";
 import { createBookingRequest, getUserBookings } from "../Controllers/appointment/booking.controller.js";
+import { toggleWishlist, getWishlist } from "../Controllers/user/wishlist.controller.js";
 import isAuth from "../Middlewares/isAuth.js";
 import uploadFile from "../Middlewares/multer.js";
 
@@ -26,5 +27,8 @@ userRouter.post("/bookings", isAuth, createBookingRequest);
 userRouter.get("/bookings", isAuth, getUserBookings);
 userRouter.put("/update", isAuth, updateUser);
 userRouter.put("/update-address", isAuth, updateAddress);
+
+userRouter.post("/wishlist/toggle", isAuth, toggleWishlist);
+userRouter.get("/wishlist", isAuth, getWishlist);
 
 export default userRouter;
