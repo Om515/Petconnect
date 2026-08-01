@@ -12,11 +12,36 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { AuthData } from "../../../context/AuthContext";
+
 const PetDetails = () => {
   const { petId } = useParams();
   const [petDetails, setPetDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const { user, setUser } = AuthData();
+  const isWishlisted = user?.wishlist?.includes(petId) || false;
+
+  const handleToggleWishlist = async (e) => {
+    e.stopPropagation();
+    if (!user) {
+      toast.error("Please login to save to wishlist");
+      return;
+    }
+    try {
+      const { data } = await axios.post("/api/user/wishlist/toggle", { petId });
+      if (data.success) {
+        toast.success(data.message);
+        setUser({ ...user, wishlist: data.wishlist });
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error("Error saving to wishlist");
+    }
+  };
+
   const handleBookPet = async () => {
     if (!petId) {
       toast.error("Invalid pet ID");
@@ -104,8 +129,12 @@ const PetDetails = () => {
               {petDetails.breed}
             </div>
             <div className="absolute top-4 right-4 z-10 flex space-x-2">
-              <button className="bg-white p-2 rounded-full shadow-md hover:bg-gray-50">
-                <Heart className="w-5 h-5 text-red-500" />
+              <button 
+                onClick={handleToggleWishlist}
+                className="bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors"
+                title={isWishlisted ? "Remove from Wishlist" : "Save to Wishlist"}
+              >
+                <Heart className={`w-5 h-5 ${isWishlisted ? "text-red-500 fill-red-500" : "text-gray-400"}`} />
               </button>
               <button
                 className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"

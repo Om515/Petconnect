@@ -59,6 +59,7 @@ const Navbar = () => {
       link: "/user/bookings",
       badge: bookingCount > 0 ? bookingCount : null
     },
+    { id: 7, name: "Wishlist", link: "/wishlist" }
   ];
 
   return (

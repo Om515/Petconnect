@@ -1,13 +1,39 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
+import { AuthData } from "../../../context/AuthContext";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+import { Heart } from "lucide-react";
 
 const BuyPets = () => {
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState({ type: "", priceRange: "" });
+  const { user, setUser } = AuthData();
+  const wishlistIds = user?.wishlist || [];
 
   const navigate = useNavigate();
+
+  const handleToggleWishlist = async (petId, e) => {
+    e.stopPropagation();
+    if (!user) {
+      toast.error("Please login to save pets to your wishlist");
+      return;
+    }
+    try {
+      const { data } = await axios.post("/api/user/wishlist/toggle", { petId });
+      if (data.success) {
+        toast.success(data.message);
+        setUser({ ...user, wishlist: data.wishlist });
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error("Error updating wishlist");
+    }
+  };
+
   useEffect(() => {
     setLoading(true);
     fetch("/api/user/buy-pet")
@@ -165,8 +191,16 @@ const BuyPets = () => {
                     alt={pet.breed}
                     className="w-full h-56 object-cover"
                   />
-                  <div className="absolute top-0 right-0 m-3 px-2 py-1 bg-cyan-500 text-white text-xs font-bold rounded">
-                    {pet.breed}
+                  <div className="absolute top-0 right-0 m-3 px-2 py-1 flex space-x-2">
+                    <span className="bg-cyan-500 text-white text-xs font-bold rounded px-2 py-1 h-fit">
+                      {pet.breed}
+                    </span>
+                    <button
+                      onClick={(e) => handleToggleWishlist(pet._id, e)}
+                      className="p-1.5 bg-white rounded-full shadow-md hover:scale-110 transition-transform"
+                    >
+                      <Heart filling={wishlistIds.includes(pet._id) ? "solid" : "none"} className={`w-4 h-4 ${wishlistIds.includes(pet._id) ? "text-red-500 fill-red-500" : "text-gray-400"}`} />
+                    </button>
                   </div>
                 </div>
                 <div className="p-5">
