@@ -27,6 +27,22 @@ const petOrderSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    gender:{
+      type: String,
+      default: "Not specified"
+    },
+    weight:{
+      type: String,
+      default: "Not specified"
+    },
+    vaccinated:{
+      type: String,
+      default: "Unknown"
+    },
+    neutered:{
+      type: String,
+      default: "Unknown"
+    },
     isVerified:{
       type: Boolean,
       default: false,

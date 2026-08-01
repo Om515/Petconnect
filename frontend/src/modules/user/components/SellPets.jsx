@@ -12,6 +12,10 @@ const SellPets = () => {
     age: "",
     description: "",
     price: "",
+    gender: "Not specified",
+    weight: "",
+    vaccinated: "Unknown",
+    neutered: "Unknown",
     file: null,
   });
 
@@ -46,6 +50,10 @@ const SellPets = () => {
     petData.append("age", formData.age);
     petData.append("description", formData.description);
     petData.append("price", formData.price);
+    petData.append("gender", formData.gender);
+    petData.append("weight", formData.weight);
+    petData.append("vaccinated", formData.vaccinated);
+    petData.append("neutered", formData.neutered);
     petData.append("file", formData.file); // Send file directly to backend
 
     try {
@@ -55,7 +63,7 @@ const SellPets = () => {
 
       if (response.data.product) {
         toast.success("Pet added successfully! Awaiting admin approval.");
-        setFormData({ category: "Animal", type: "", breed: "", age: "", description: "", price: "", file: null });
+        setFormData({ category: "Animal", type: "", breed: "", age: "", description: "", price: "", gender: "Not specified", weight: "", vaccinated: "Unknown", neutered: "Unknown", file: null });
         setPreview(null);
       } else {
         toast.error(response.data.message);
@@ -152,6 +160,77 @@ const SellPets = () => {
               step="0.1"
               className="w-full p-3 border border-cyan-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-cyan-50 transition-all" 
             />
+          </div>
+
+          {/* Gender */}
+          <div className="col-span-1">
+            <label className="flex items-center gap-2 text-sm font-medium text-cyan-700 mb-1">
+              <PawPrint size={16} className="text-cyan-500" />
+              Gender
+            </label>
+            <select 
+              name="gender" 
+              value={formData.gender} 
+              onChange={handleChange} 
+              className="w-full p-3 border border-cyan-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-cyan-50 transition-all"
+            >
+              <option value="Not specified">Not specified</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+
+          {/* Weight */}
+          <div className="col-span-1">
+            <label className="flex items-center gap-2 text-sm font-medium text-cyan-700 mb-1">
+              <PawPrint size={16} className="text-cyan-500" />
+              Weight (e.g., 28 kg)
+            </label>
+            <input 
+              type="text" 
+              name="weight" 
+              placeholder="e.g., 28 kg" 
+              value={formData.weight} 
+              onChange={handleChange} 
+              className="w-full p-3 border border-cyan-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-cyan-50 transition-all" 
+            />
+          </div>
+
+          {/* Vaccinated */}
+          <div className="col-span-1">
+            <label className="flex items-center gap-2 text-sm font-medium text-cyan-700 mb-1">
+              <Tag size={16} className="text-cyan-500" />
+              Vaccinated
+            </label>
+            <select 
+              name="vaccinated" 
+              value={formData.vaccinated} 
+              onChange={handleChange} 
+              className="w-full p-3 border border-cyan-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-cyan-50 transition-all"
+            >
+              <option value="Unknown">Unknown</option>
+              <option value="Up to date">Up to date</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          {/* Neutered */}
+          <div className="col-span-1">
+            <label className="flex items-center gap-2 text-sm font-medium text-cyan-700 mb-1">
+              <Tag size={16} className="text-cyan-500" />
+              Neutered
+            </label>
+            <select 
+              name="neutered" 
+              value={formData.neutered} 
+              onChange={handleChange} 
+              className="w-full p-3 border border-cyan-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-cyan-50 transition-all"
+            >
+              <option value="Unknown">Unknown</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
           </div>
         </div>
 

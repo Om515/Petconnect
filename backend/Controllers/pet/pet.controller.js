@@ -4,7 +4,7 @@ import cloudinary from "cloudinary";
 
 const sellPet = async (req, res) => {
   try {
-    const { category, type, breed, age, description, price } = req.body;
+    const { category, type, breed, age, description, price, gender, weight, vaccinated, neutered } = req.body;
     
     const file = req.file;
     if (!file) {
@@ -25,6 +25,10 @@ const sellPet = async (req, res) => {
       age,
       description,
       price,
+      gender,
+      weight,
+      vaccinated,
+      neutered,
       image: {
         id: cloud.public_id,
         url: cloud.secure_url,

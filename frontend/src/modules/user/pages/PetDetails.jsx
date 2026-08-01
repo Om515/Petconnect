@@ -9,6 +9,11 @@ import {
   Info,
   Heart,
   Share2,
+  PawPrint,
+  Calendar,
+  MessageCircle,
+  FileCheck,
+  CheckCircle,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -16,9 +21,12 @@ import { AuthData } from "../../../context/AuthContext";
 
 const PetDetails = () => {
   const { petId } = useParams();
+  const navigate = useNavigate();
   const [petDetails, setPetDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [requestStatus, setRequestStatus] = useState(null);
+  const [isRequesting, setIsRequesting] = useState(false);
   
   const { user, setUser } = AuthData();
   const isWishlisted = user?.wishlist?.includes(petId) || false;
@@ -42,6 +50,37 @@ const PetDetails = () => {
     }
   };
 
+  const handleMessageOwner = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      toast.error("Please login to message the owner");
+      return;
+    }
+    if (requestStatus === 'pending') {
+      toast.info("Request already sent and is pending");
+      return;
+    }
+    if (requestStatus === 'accepted') {
+      navigate('/chat');
+      return;
+    }
+
+    setIsRequesting(true);
+    try {
+      const { data } = await axios.post("/api/chat/requests", { petId });
+      if (data.success) {
+        toast.success("Request sent to owner!");
+        setRequestStatus(data.request.status);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error sending request");
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
   const handleBookPet = async () => {
     if (!petId) {
       toast.error("Invalid pet ID");
@@ -60,6 +99,17 @@ const PetDetails = () => {
     }
   };
   
+
+  useEffect(() => {
+    if (user) {
+      axios.get("/api/chat/requests/sent").then((res) => {
+        if (res.data.success) {
+          const req = res.data.requests.find(r => (r.pet?._id || r.pet) === petId);
+          if (req) setRequestStatus(req.status);
+        }
+      }).catch(err => console.error(err));
+    }
+  }, [petId, user]);
 
   useEffect(() => {
     setLoading(true);
@@ -120,158 +170,163 @@ const PetDetails = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-gray-50">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="md:flex">
-          {/* Left side - Image positioned in the middle */}
-          <div className="md:w-2/5 relative flex items-center justify-center bg-gray-100">
-            <div className="absolute top-4 left-4 z-10 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-              {petDetails.breed}
-            </div>
-            <div className="absolute top-4 right-4 z-10 flex space-x-2">
-              <button 
-                onClick={handleToggleWishlist}
-                className="bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors"
-                title={isWishlisted ? "Remove from Wishlist" : "Save to Wishlist"}
-              >
-                <Heart className={`w-5 h-5 ${isWishlisted ? "text-red-500 fill-red-500" : "text-gray-400"}`} />
-              </button>
-              <button
-                className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const shareUrl =
-                    window.location.origin + `/pet/${petDetails._id}`;
+    <div className="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8 font-sans cursor-default">
+      <div className="bg-white rounded-[24px] shadow-xl border border-gray-100 overflow-hidden max-w-[1000px] mx-auto flex flex-col md:flex-row">
+        
+        {/* Left Side (Image Area) */}
+        <div className="w-full md:w-1/2 relative bg-gray-50 flex items-center justify-center p-6 min-h-[400px]">
+          <div className="absolute top-5 left-5 z-10 flex items-center bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-md">
+            <PawPrint className="w-4 h-4 mr-2" />
+            {petDetails.breed}
+          </div>
+          
+          <div className="absolute top-5 right-5 z-10 flex space-x-3">
+            <button 
+              onClick={handleToggleWishlist}
+              className="bg-white p-2.5 rounded-full shadow-md hover:scale-105 transition-transform"
+            >
+              <Heart className={`w-5 h-5 ${isWishlisted ? "text-red-500 fill-red-500" : "text-gray-400"}`} />
+            </button>
+            <button
+              className="bg-white p-2.5 rounded-full shadow-md hover:scale-105 transition-transform"
+              onClick={(e) => {
+                e.stopPropagation();
+                const shareUrl = window.location.origin + `/pet/${petDetails._id}`;
+                if (navigator.share) {
+                  navigator.share({ title: petDetails.type, url: shareUrl });
+                } else {
+                  navigator.clipboard.writeText(shareUrl);
+                  toast.success("Link copied!");
+                }
+              }}
+            >
+              <Share2 size={20} className="text-gray-600" />
+            </button>
+          </div>
 
-                  if (navigator.share) {
-                    navigator
-                      .share({
-                        title: petDetails.type || "Check out this pet!",
-                        text: `Check out this ${petDetails.breed} available for adoption!`,
-                        url: shareUrl,
-                      })
-                      .then(() => console.log("Shared successfully"))
-                      .catch((error) => console.error("Error sharing:", error));
-                  } else {
-                    navigator.clipboard
-                      .writeText(shareUrl)
-                      .then(() => alert("Pet link copied to clipboard!"))
-                      .catch((err) => console.error("Clipboard error:", err));
-                  }
-                }}
-              >
-                <Share2 size={20} className="text-gray-800" />
-              </button>
+          <img
+            src={petDetails.image.url}
+            alt={petDetails.breed}
+            className="w-[85%] max-h-[400px] object-contain drop-shadow-xl"
+          />
+
+          <div className="absolute bottom-5 left-5 z-10 bg-white px-3 py-1.5 rounded-md text-xs font-medium text-gray-500 shadow-sm border border-gray-100 flex items-center">
+            <Calendar className="w-3.5 h-3.5 mr-1.5 opacity-70" />
+            Listed just now
+          </div>
+        </div>
+
+        {/* Right Side (Details Area) */}
+        <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col bg-white">
+          
+          {/* Header Row */}
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h1 className="text-4xl font-serif font-medium text-gray-900 mb-1">{petDetails.type}</h1>
+              <p className="text-gray-400 text-[17px] italic">{petDetails.breed}</p>
             </div>
-            <div className="h-full flex items-center">
-              <img
-                src={petDetails.image.url}
-                alt={petDetails.breed}
-                className="w-full h-80 md:h-96 object-contain"
-              />
+            <div className="bg-green-100/80 text-emerald-600 text-lg font-bold px-4 py-1.5 rounded-lg shadow-sm border border-green-200">
+              ₹ {petDetails.price.toLocaleString("en-IN")}
             </div>
           </div>
 
-          {/* Right side - Pet Info */}
-          <div className="md:w-3/5 p-8">
-            <div className="flex justify-between items-center mb-4">
+          {/* 5 Grid Attribute Section */}
+          <div className="grid grid-cols-2 gap-3 mb-6 text-sm">
+            <div className="bg-blue-50 p-3 rounded-xl">
+              <div className="flex items-center text-blue-500 text-xs font-medium mb-1.5">
+                <Clock className="w-3.5 h-3.5 mr-1" /> Age
+              </div>
+              <p className="font-bold text-gray-900 ml-1">{petDetails.age} years</p>
+            </div>
+            <div className="bg-purple-50 p-3 rounded-xl">
+              <div className="flex items-center text-purple-500 text-xs font-medium mb-1.5">
+                <span className="font-bold text-sm leading-none mr-1">♂♀</span> Gender
+              </div>
+              <p className="font-bold text-gray-900 ml-1">{petDetails.gender || "Not specified"}</p>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-xl">
+               <div className="flex items-center text-gray-400 text-xs font-medium mb-1.5">
+                <Info className="w-3.5 h-3.5 mr-1" /> Weight
+              </div>
+              <p className="font-bold text-gray-900 ml-1">{petDetails.weight || "Not specified"}</p>
+            </div>
+            <div className="bg-green-50 p-3 rounded-xl">
+               <div className="flex items-center text-emerald-500 text-xs font-medium mb-1.5">
+                <FileCheck className="w-3.5 h-3.5 mr-1" /> Vaccinated
+              </div>
+              <p className="font-bold text-gray-900 ml-1">{petDetails.vaccinated || "Unknown"}</p>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-xl col-span-2 sm:col-span-1">
+               <div className="flex items-center text-gray-400 text-xs font-medium mb-1.5">
+                <CheckCircle className="w-3.5 h-3.5 mr-1" /> Neutered
+              </div>
+              <p className="font-bold text-gray-900 ml-1">{petDetails.neutered || "Unknown"}</p>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="mb-6">
+            <h3 className="font-bold text-gray-900 text-[15px] mb-2">Description</h3>
+            <p className="text-gray-500 text-sm leading-[1.6]">
+              {petDetails.description}
+            </p>
+          </div>
+
+          <hr className="border-gray-100 mb-6" />
+
+          {/* Owner Box */}
+          <div className="bg-gray-50 rounded-xl p-5 mb-7 border border-gray-100 relative">
+            <div className="flex items-center mb-4">
+              <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-600 font-bold text-lg flex items-center justify-center mr-3 shadow-sm">
+                {petDetails.owner.name.charAt(0).toUpperCase()}
+              </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {petDetails.type}
-                </h1>
-                <p className="text-gray-500 italic">{petDetails.breed}</p>
-              </div>
-              <span className="bg-green-100 text-green-800 text-lg font-medium px-4 py-2 rounded-lg flex items-center">
-                <IndianRupee className="w-5 h-5 mr-1" />
-                {petDetails.price.toLocaleString()}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-blue-50 rounded-lg p-3 flex items-center">
-                <Clock className="w-5 h-5 mr-2 text-blue-500" />
-                <div>
-                  <p className="text-xs text-gray-500">Age</p>
-                  <p className="font-medium">{petDetails.age} years</p>
-                </div>
-              </div>
-
-              {/* You can add more pet attributes here in similar styled boxes */}
-              <div className="bg-purple-50 rounded-lg p-3 flex items-center">
-                <div className="w-5 h-5 mr-2 text-purple-500 flex items-center justify-center">
-                  <span className="font-bold">♂♀</span>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Gender</p>
-                  <p className="font-medium">
-                    {petDetails.gender || "Not specified"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg mb-6">
-              <h3 className="font-medium text-gray-900 mb-2">Description</h3>
-              <p className="text-gray-700 leading-relaxed">
-                {petDetails.description}
-              </p>
-            </div>
-
-            <div className="border-t border-gray-200 pt-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Owner Details
-              </h2>
-              <div className="flex items-start mb-4">
-                <div className="bg-blue-100 h-12 w-12 rounded-full p-2 mr-3 flex items-center justify-center">
-                  <span className="text-blue-600 font-medium text-lg">
-                    {petDetails.owner.name.charAt(0)}
+                <div className="flex items-center mb-0.5">
+                  <h4 className="font-bold text-gray-900 mr-2 text-[15px]">{petDetails.owner.name}</h4>
+                  <span className="bg-blue-100 text-blue-600 text-[9px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider">
+                    OWNER
                   </span>
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {petDetails.owner.name}
-                  </p>
-                  <p className="text-sm text-gray-500">Pet Owner</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                <div className="flex items-center text-gray-700 bg-gray-50 p-3 rounded-lg">
-                  <Mail className="w-5 h-5 mr-2 text-blue-500" />
-                  <span className="text-sm truncate">
-                    {petDetails.owner.email}
-                  </span>
-                </div>
-
-                <div className="flex items-center text-gray-700 bg-gray-50 p-3 rounded-lg">
-                  <Phone className="w-5 h-5 mr-2 text-blue-500" />
-                  <span className="text-sm">{petDetails.owner.mobile}</span>
-                </div>
-              </div>
-
-              <div className="flex items-start text-gray-700 bg-gray-50 p-3 rounded-lg mb-6">
-                <MapPin className="w-5 h-5 mr-2 mt-1 text-blue-500 flex-shrink-0" />
-                <span className="text-sm">{petDetails.owner.address}</span>
+                <p className="text-gray-400 text-xs">{petDetails.owner.address}</p>
               </div>
             </div>
-
-            <div className="flex gap-4">
-              <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center">
-                <a
-                  href={`tel:${petDetails.owner.mobile}`}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center"
-                >
-                  <Mail className="w-5 h-5 mr-2" />
-                  Message Owner
-                </a>
-              </button>
-              <button 
-              onClick={ handleBookPet }
-              className="flex-1 bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center">
-                Book Pet
-              </button>
+            
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex-1 flex items-center bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm min-w-0">
+                <Mail className="w-3.5 h-3.5 text-gray-400 mr-2 flex-shrink-0" />
+                <span className="text-xs font-medium text-gray-600 truncate">{petDetails.owner.email}</span>
+              </div>
+              <div className="flex-1 flex items-center bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm min-w-0">
+                <Phone className="w-3.5 h-3.5 text-gray-400 mr-2 flex-shrink-0" />
+                <span className="text-xs font-medium text-gray-600 truncate">{petDetails.owner.mobile}</span>
+              </div>
             </div>
           </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4 mt-auto">
+            <button 
+              onClick={handleMessageOwner}
+              disabled={isRequesting || requestStatus === 'pending'}
+              className={`flex-1 w-full flex items-center justify-center text-sm font-semibold py-3.5 px-4 rounded-xl shadow-md transition-all ${
+                requestStatus === 'pending' ? 'bg-gray-400 text-white cursor-not-allowed' :
+                requestStatus === 'accepted' ? 'bg-green-600 hover:bg-green-700 text-white' :
+                'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
+            >
+              <MessageCircle className="w-4 h-4 mr-2" /> 
+              {isRequesting ? 'Sending...' : 
+               requestStatus === 'pending' ? 'Request Pending' : 
+               requestStatus === 'accepted' ? 'Open Chat' : 'Message owner'}
+            </button>
+            <button 
+              onClick={handleBookPet} 
+              className="flex-1 bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 active:scale-95 font-semibold py-3.5 px-4 rounded-xl shadow-sm transition-all text-sm"
+            >
+               Request to adopt
+            </button>
+          </div>
+
         </div>
       </div>
     </div>

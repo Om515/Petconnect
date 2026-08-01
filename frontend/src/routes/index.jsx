@@ -26,6 +26,8 @@ import UserCaretakerProfile from '../modules/user/components/UserCaretakerProfil
 import UserBookings from '../modules/user/components/UserBookings';
 import ForgotPassword from '../modules/user/components/ForgotPassword';
 import Wishlist from '../modules/user/pages/Wishlist';
+import Chat from '../modules/user/pages/Chat';
+import Notifications from '../modules/user/pages/Notifications';
 
 // Migrated Caretaker Modules
 import CaretakerHome from '../modules/caretaker/pages/Home';
@@ -76,6 +78,8 @@ const AppRoutes = () => {
         <Route path="/caretakers/:id" element={(isAuthenticated && role === "user") ? <UserCaretakerProfile /> : <Navigate to="/login" />} />
         <Route path="/user/bookings" element={<UserBookings />} />
         <Route path="/wishlist" element={(isAuthenticated && role === "user") ? <Wishlist /> : <Navigate to="/login" />} />
+        <Route path="/chat" element={(isAuthenticated && role === "user") ? <Chat /> : <Navigate to="/login" />} />
+        <Route path="/notifications" element={(isAuthenticated && role === "user") ? <Notifications /> : <Navigate to="/login" />} />
       </Route>
 
       {/* Caretaker Routes */}

@@ -111,9 +111,15 @@ const googleLogin = async (req, res) => {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
-    const { email, name, sub: googleId } = payload;
     
-    let user = await userModel.findOne({ email });
+    // Some Google accounts (like workspace accounts) might not have a name defined.
+    // We provide a fallback using the email prefix to satisfy Mongoose's required: true.
+    const { email, sub: googleId } = payload;
+    const name = payload.name || email.split('@')[0];
+    
+    // Make the email search case-insensitive, because Google always returns lowercase,
+    // but the DB might have an uppercase email from a local signup.
+    let user = await userModel.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } });
     
     if (user) {
       // If they exist but don't have a googleId linked yet
@@ -126,7 +132,7 @@ const googleLogin = async (req, res) => {
       // Auto-create new user with role 'user'
       user = new userModel({
         name,
-        email,
+        email: email.toLowerCase(),
         googleId,
         authProvider: "google",
         role: "user",
@@ -148,8 +154,17 @@ const googleLogin = async (req, res) => {
     createWebToken(user, cookieName, res, "1d", 1 * 24 * 60 * 60 * 1000);
     res.json({ success: true, user, role: user.role, message: "Successfully logged in with Google!" });
   } catch (error) {
-    console.error("Google Auth Error:", error);
-    res.json({ success: false, message: "Google Authentication Failed" });
+    console.error("Google Auth Error Stack:", error);
+    
+    // Checking if it's a MongoDB Duplicate Key Error on GoogleId
+    let errorMessage = "Google Authentication Failed";
+    if (error.code === 11000) {
+      errorMessage = "This Google Account is already linked to another user, or a conflicting duplicate exists.";
+    } else if (error.name === "ValidationError") {
+      errorMessage = "Data validation error during signup: " + error.message;
+    }
+    
+    res.json({ success: false, message: errorMessage, errorDetails: error.message });
   }
 };
 

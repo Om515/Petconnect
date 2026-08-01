@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Bell, MessageCircle } from "lucide-react";
 import { AuthData } from "../../../context/AuthContext";
 import assests from "../assets/assests";
 import { MdPerson } from "react-icons/md";
+import { io } from "socket.io-client";
+import toast from "react-hot-toast";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,6 +14,8 @@ const Navbar = () => {
   const { fetchCurrentUser } = AuthData();
   const { isAuthenticated, logout, role } = AuthData();
   const [bookingCount, setBookingCount] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [messageCount, setMessageCount] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,6 +24,22 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const fetchNotifications = async () => {
+    if (!isAuthenticated) return;
+    try {
+      const res = await fetch("/api/chat/notifications", { credentials: "include" });
+      const data = await res.json();
+      if (res.ok) {
+        const unread = data.notifications?.filter(n => !n.read && n.type !== 'new_message').length || 0;
+        const unreadMsg = data.notifications?.filter(n => !n.read && n.type === 'new_message').length || 0;
+        setNotificationCount(unread);
+        setMessageCount(unreadMsg);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Fetch booking count when authenticated
   useEffect(() => {
@@ -38,7 +58,39 @@ const Navbar = () => {
         }
       };
       fetchBookingCount();
+      fetchNotifications();
     }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    window.addEventListener('messages_read', fetchNotifications);
+    return () => window.removeEventListener('messages_read', fetchNotifications);
+  }, [isAuthenticated]);
+
+  // Global socket listener for background real-time messaging
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const globalSocket = io("http://localhost:7001", { withCredentials: true });
+    
+    globalSocket.on("incoming_message", (data) => {
+        setMessageCount(prev => prev + 1);
+        
+        // Suppress popup if they are currently inside the chat module
+        if (!window.location.pathname.includes('/chat')) {
+            toast.success(`You have a new message!`, {
+                icon: '💬',
+                duration: 4000,
+                style: {
+                    borderRadius: '10px',
+                    background: '#333',
+                    color: '#fff',
+                }
+            });
+        }
+    });
+
+    return () => globalSocket.disconnect();
   }, [isAuthenticated]);
 
   const handleLogout = () => {
@@ -81,6 +133,29 @@ const Navbar = () => {
           <div className="hidden sm:flex items-center gap-4">
             {isAuthenticated && role === "user" ? (
               <>
+                <button
+                  onClick={() => navigate("/notifications")}
+                  className="relative text-white hover:text-cyan-200 transition-colors p-2 rounded-full border-2 border-transparent hover:border-white"
+                >
+                  <Bell size={22} />
+                  {notificationCount > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {notificationCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => navigate("/chat")}
+                  className="relative text-white hover:text-cyan-200 transition-colors p-2 rounded-full border-2 border-transparent hover:border-white mr-2"
+                >
+                  <MessageCircle size={22} />
+                  {messageCount > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {messageCount}
+                    </span>
+                  )}
+                </button>
+
                 <button
                   onClick={() => navigate("/profile")}
                   className="bg-gradient-to-r from-teal-500 to-cyan-400 text-white p-2 rounded-full flex items-center justify-center hover:shadow-lg transition-all duration-300 border-2 border-white"
