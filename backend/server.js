@@ -8,8 +8,10 @@ import bodyParser from "body-parser";
 import adminRouter from "./Routes/adminRouter.js";
 import CaretakerRouter from "./Routes/caretakerRoutes.js";
 import authRouter from "./Routes/authRouter.js";
+import chatRouter from "./Routes/chatRouter.js";
 import cloudinary from "cloudinary"
 import seedAdmin from "./Seed/adminSeeder.js";
+import { initSocket } from "./socket.js";
 
 dotenv.config();
 
@@ -43,12 +45,15 @@ app.use("/api/auth", authRouter);
 app.use("/api/user",userRouter)
 app.use("/api/admin",adminRouter)
 app.use("/api/caretaker",CaretakerRouter)
+app.use("/api/chat", chatRouter)
 
 
 app.get("/",(req,res)=>{
     res.send("Api Working");
 })
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
+
+initSocket(server);

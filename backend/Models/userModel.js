@@ -55,6 +55,10 @@ const userSchema = new mongoose.Schema(
         ref: "PetOrder",
       },
     ],
+    lastSeen: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true,
