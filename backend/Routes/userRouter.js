@@ -7,7 +7,7 @@ import { CaretakerList, getCaretakerProfile } from "../Controllers/user/userCare
 import { createBookingRequest, getUserBookings } from "../Controllers/appointment/booking.controller.js";
 import { toggleWishlist, getWishlist } from "../Controllers/user/wishlist.controller.js";
 import isAuth from "../Middlewares/isAuth.js";
-import uploadFile from "../Middlewares/multer.js";
+import uploadFile, { uploadPetFields } from "../Middlewares/multer.js";
 
 const userRouter = express.Router();
 
@@ -15,7 +15,7 @@ userRouter.post("/login", loginUser);
 userRouter.post("/signup", registerUser);
 userRouter.get("/myinfo", isAuth, myProfile);
 userRouter.get("/logout", isAuth, logoutUser);
-userRouter.post("/sell-pet", isAuth, uploadFile, sellPet);
+userRouter.post("/sell-pet", isAuth, uploadPetFields, sellPet);
 userRouter.get("/buy-pet", isAuth, buyPetList);
 userRouter.get("/pet-info", isAuth, petInfo);
 userRouter.get("/user-profile", isAuth, userAllInfo);
@@ -32,3 +32,4 @@ userRouter.post("/wishlist/toggle", isAuth, toggleWishlist);
 userRouter.get("/wishlist", isAuth, getWishlist);
 
 export default userRouter;
+

@@ -2,8 +2,7 @@ import { petOrder } from "../../Models/petModel.js";
 
 const petList = async (req, res) => {
     try {
-        const petContent = await petOrder.find({ isVerified: false });
-        console.log(petContent);
+        const petContent = await petOrder.find({ isVerified: false }).populate("owner", "name email mobile address role");
         res.json({ success: true, message: "Data fetched successfully", petContent });
     } catch (error) {
         console.log("Error in petList ", error);
