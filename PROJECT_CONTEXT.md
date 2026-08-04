@@ -1,17 +1,18 @@
 # PetConnect 🐾 - Comprehensive AI Context & Technical Reference
 
-> **Purpose of this file:** This document provides a complete, structured overview of the PetConnect repository. It is designed to allow any AI assistant (ChatGPT, Claude, Gemini, Copilot, Cursor, etc.) to immediately understand the project architecture, database schemas, authentication flows, API routes, frontend structures, and business logic without needing to scan every individual file.
+> **Purpose of this file:** This document provides a complete, structured overview of the PetConnect repository. It is designed to allow any AI assistant (ChatGPT, Claude, Gemini, Copilot, Cursor, etc.) to immediately understand the project architecture, database schemas, authentication flows, API routes, frontend structures, real-time messaging/sockets, and business logic without needing to scan every individual file.
 
 ---
 
 ## 1. Executive Summary & Project Overview
 
-**PetConnect** is a full-stack **MERN (MongoDB, Express, React, Node.js)** web application built as a multi-role ecosystem for pet owners, caretakers, and platform administrators.
+**PetConnect** is a full-stack **MERN (MongoDB, Express, React 18, Node.js)** web application built as a multi-role ecosystem for pet owners, caretakers, and platform administrators.
 
 ### Core Value Proposition & Domains:
-1. **Pet Marketplace**: Allows pet owners to list pets for sale/adoption and enables users to browse, search, and purchase pets.
-2. **Caretaker Marketplace & Professional Showcase**: Allows users to apply to become pet caretakers, manage professional showcase profiles (services, availability calendar, trust badges, home environment, gallery), and accept booking requests from pet owners.
-3. **Admin Supervision & Profile Approval**: Provides a centralized admin control panel to verify pet listings, approve/reject caretaker applications, and review/approve caretaker professional profile edits with full versioning.
+1. **Pet Marketplace**: Allows pet owners to list pets for sale/adoption and enables users to browse, search, wishlist, and purchase pets.
+2. **Caretaker Marketplace & Professional Showcase**: Allows users to apply to become pet caretakers, manage professional showcase profiles (services, daily/hourly rates, availability calendar, trust badges, home environment, gallery), and accept booking requests from pet owners.
+3. **Real-Time Social & Chat System**: Enables connection requests between users/caretakers, real-time 1-on-1 socket.io chat, media sharing, read receipts, typing status, presence tracking, and instant unread notifications.
+4. **Admin Supervision & Profile Approval**: Provides a centralized admin control panel to verify pet listings, approve/reject caretaker applications, and review/approve caretaker professional profile edits with side-by-side versioning comparison.
 
 ---
 
@@ -20,8 +21,9 @@
 ### Backend
 - **Runtime**: Node.js (ESM modules `"type": "module"`)
 - **Framework**: Express.js (`v4.21.2`)
+- **Real-Time Engine**: Socket.io (`v4.8.1`) with JWT handshake authentication & room events
 - **Database**: MongoDB using Mongoose ORM (`v8.13.0`)
-- **Authentication**: JWT (`jsonwebtoken` v9.0.2) + Passwords hashed with `bcrypt` (`v5.1.1`)
+- **Authentication**: JWT (`jsonwebtoken` v9.0.2) + Passwords hashed with `bcrypt` (`v5.1.1`) + Google OAuth (`google-auth-library`)
 - **Middleware**: `cookie-parser`, `body-parser`, `cors`
 - **File Uploads**: `multer` + `datauri` + `cloudinary` (`v2.6.0`) for media storage
 - **Development Tool**: `nodemon` (`v3.1.9`)
@@ -30,137 +32,43 @@
 ### Frontend
 - **Framework / Library**: React 18 SPA
 - **Build Tool**: Vite
-- **Routing**: `react-router-dom` (v6)
+- **Routing**: `react-router-dom` (v6/v7)
 - **State Management**: React Context API (`AuthContext.jsx`, `AdminContext.jsx`)
 - **Styling**: Tailwind CSS + Custom CSS (`index.css`, `App.css`)
 - **Icons**: React Icons / Lucide React
+- **Notifications & UI**: `react-hot-toast`, `framer-motion`
 - **Default Dev Port**: `5173`
 
 ---
 
-## 3. Repository Architecture & Directory Layout
+## 3. Database Schemas & Data Models
 
-```
-petconnect/
-├── PROJECT_CONTEXT.md          # Comprehensive AI documentation (Markdown)
-├── PROJECT_INFO.txt            # Comprehensive AI documentation (Plain Text)
-├── README.md                   # Quickstart instructions
-├── backend/
-│   ├── Config/
-│   │   └── db.js                 # Mongoose DB connection & IPv4 DNS resolution
-│   ├── Controllers/
-│   │   ├── admin/                # Admin-specific logic
-│   │   │   ├── admin.controller.js
-│   │   │   ├── adminCaretaker.controller.js
-│   │   │   ├── adminPet.controller.js
-│   │   │   ├── adminProfileApproval.controller.js # [NEW] Review & approve professional profile versions
-│   │   │   └── adminUser.controller.js
-│   │   ├── appointment/          # Booking/Service appointment logic
-│   │   │   └── booking.controller.js
-│   │   ├── auth/                 # User/Admin/Caretaker auth logic
-│   │   │   ├── adminAuth.controller.js
-│   │   │   ├── auth.controller.js
-│   │   │   ├── caretakerAuth.controller.js
-│   │   │   └── userAuth.controller.js
-│   │   ├── caretaker/            # Caretaker profile & application handling
-│   │   │   ├── caretakerApplication.controller.js
-│   │   │   ├── caretakerBooking.controller.js
-│   │   │   ├── caretakerProfile.controller.js
-│   │   │   └── professionalProfile.controller.js # [NEW] Caretaker professional showcase & edit draft handler
-│   │   ├── pet/                  # Pet listing & buying logic
-│   │   │   └── pet.controller.js
-│   │   └── user/                 # User profile & general user actions
-│   │       ├── user.controller.js
-│   │       ├── userCaretaker.controller.js
-│   │       └── userProfile.controller.js
-│   ├── Middlewares/               # Authentication & Authorization middlewares
-│   ├── Models/                   # Mongoose database models
-│   │   ├── adminModel.js         # Admin schema
-│   │   ├── bookingRequestModel.js# Caretaker service booking schema
-│   │   ├── caretakerApplicationModel.js # Caretaker verification/application schema
-│   │   ├── caretakerModel.js     # Caretaker base schema
-│   │   ├── caretakerProfileModel.js # [NEW] Professional profile showcase with versioning
-│   │   ├── imageModel.js         # Cloudinary image schema helper
-│   │   ├── petModel.js           # Pet listing / PetOrder schema
-│   │   └── userModel.js          # Core User schema
-│   ├── Routes/                   # Express router handlers
-│   │   ├── adminRouter.js        # /api/admin
-│   │   ├── authRouter.js         # /api/auth
-│   │   ├── caretakerRoutes.js    # /api/caretaker
-│   │   └── userRouter.js         # /api/user
-│   ├── Seed/
-│   │   └── adminSeeder.js        # Auto-seeds default admin from .env on backend startup
-│   ├── utils/                    # Cloudinary upload helpers, token utilities
-│   ├── .env                      # Environment variables (Backend)
-│   ├── package.json
-│   └── server.js                 # App entry point
-│
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── context/              # Global state contexts (AuthContext, etc.)
-│   │   ├── layouts/              # PublicLayout, UserLayout, CaretakerLayout, AdminLayout
-│   │   ├── modules/              # Domain-driven modules
-│   │   │   ├── admin/            # Pages & components for Admin portal (AdminProfileReview.jsx)
-│   │   │   ├── caretaker/        # Pages & components for Caretaker portal (CompleteProfessionalProfile.jsx)
-│   │   │   └── user/             # Pages & components for User/Pet Owner portal (UserCaretakerProfile.jsx)
-│   │   ├── routes/
-│   │   │   └── index.jsx         # App router configuration & route guards
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── package.json
-│   └── vite.config.js
-└── README.md
-```
+1. **`User` Schema (`backend/Models/userModel.js`)**: Account info, role (`user`, `caretaker`, `admin`), lastSeen timestamp.
+2. **`CaretakerApplication` Schema (`backend/Models/caretakerApplicationModel.js`)**: Applicant details, experience, hourly rate, status (`pending`, `approved`, `rejected`).
+3. **`CaretakerProfile` Schema (`backend/Models/caretakerProfileModel.js`)**: Versioned professional profile (services, rates, home environment, trust badges, gallery, availability).
+4. **`PetOrder` / `Pet` Schema (`backend/Models/petModel.js`)**: Pet category, breed, price, Cloudinary image, verification status, sold state, buyer ref.
+5. **`BookingRequest` Schema (`backend/Models/bookingRequestModel.js`)**: User-caretaker booking details, status (`pending`, `accepted`, `rejected`, `completed`, `cancelled`).
+6. **`ConnectionRequest` Schema (`backend/Models/connectionRequestModel.js`)**: Connection handshake state (`pending`, `accepted`, `rejected`).
+7. **`Conversation` Schema (`backend/Models/conversationModel.js`)**: 1-on-1 chat room tracking participants and last message.
+8. **`Message` Schema (`backend/Models/messageModel.js`)**: Message content, Cloudinary attachment image, sender, readBy array.
+9. **`Notification` Schema (`backend/Models/notificationModel.js`)**: In-app push notifications with dynamic unread tracking.
 
 ---
 
-## 4. Database Schemas & Data Models
+## 4. Key Endpoints Summary
 
-### 1. `User` Schema (`backend/Models/userModel.js`)
-- `name` *(String, required)*
-- `email` *(String, required, unique)*
-- `password` *(String, required - bcrypt hashed)*
-- `mobile` *(String, required, unique)*
-- `address` *(String, required)*
-- `role` *(String, enum: `["user", "caretaker", "admin"]`, default: `"user"`)*
-- `timestamps` *(createdAt, updatedAt)*
-
-### 2. `CaretakerProfile` Schema (`backend/Models/caretakerProfileModel.js`)
-- `caretaker` *(ObjectId ref `user`, required)*
-- `version` *(Number, default: 1)*
-- `status` *(String, enum: `["pending", "approved", "rejected", "archived"]`, default: `"pending"`)*
-- `headline` *(String)*
-- `profileImage`, `coverBanner` *(String URLs)*
-- `city`, `state`, `zipCode` *(Strings)*
-- `bio`, `petOwnershipHistory` *(Strings)*
-- `yearsOfExperience` *(Number)*, `responseTime` *(String)*
-- `hasEmergencyTransport`, `isBackgroundChecked` *(Booleans)*
-- `services` *(Array of `{ title, description, price, unit }`)*
-- `baseDailyRate`, `additionalPetRate`, `holidayRate` *(Numbers)*
-- `availabilityDays` *(Array of Day Strings)*
-- `operatingHours` *(`{ start, end }`)*
-- `isAcceptingNewClients` *(Boolean)*
-- `trustBadges` *(Array of Strings)*, `skills` *(Array of Strings)*
-- `acceptedPetTypes`, `acceptedDogSizes` *(Arrays of Strings)*
-- `gallery` *(Array of `{ url, caption, publicId }`)*
-- `homeEnvironment` *(`{ housingType, yardType, hasOwnPets, hasChildren, nonSmokingHome }`)*
-- `safetyInfo` *(`{ emergencyVetContact, hasFirstAidKit, insured }`)*
-- `certifications` *(Array of `{ title, issuer, year, credentialUrl }`)*
-- `rejectionReason` *(String)*, `reviewedBy` *(ObjectId ref user)*, `reviewedAt` *(Date)*
+- **`/api/auth`**: User registration, login, logout, Google OAuth.
+- **`/api/user`**: User profile management, pet marketplace (`sell-pet`, `buy-pet`, `book-pet`), caretaker discovery, wishlisting.
+- **`/api/caretaker`**: Caretaker application submission, booking status updates, professional profile draft submission (`POST /professional-profile`).
+- **`/api/chat`**: Connection requests (`/requests`), conversations (`/conversations`), message history & upload (`/messages`), notifications (`/notifications`).
+- **`/api/admin`**: User management, pet approval (`/approve-pet`), caretaker application approval (`/approve-caretaker`), professional profile draft review (`/caretaker-profiles/pending`, `/caretaker-profiles/approve`).
 
 ---
 
-## 5. API Endpoints Reference
+## 5. Suggested Platform Improvements
 
-### `/api/caretaker` (Professional Profile)
-- `GET /api/caretaker/professional-profile` — Get caretaker's live approved profile, pending draft, and rejection feedback
-- `POST /api/caretaker/professional-profile` — Submit/update professional profile changes as a pending draft
-
-### `/api/admin` (Profile Approval)
-- `GET /api/admin/caretaker-profiles/pending` — Fetch pending profile drafts for side-by-side comparison
-- `POST /api/admin/caretaker-profiles/approve` — Approve pending profile (archive old live profile & promote pending to approved)
-- `POST /api/admin/caretaker-profiles/reject` — Reject pending profile draft with feedback reason
-
----
-*Updated with Professional Caretaker Profile & Versioning system.*
+1. **Payment Gateway Integration**: Stripe/Razorpay checkout flows with escrow holding until booking completion.
+2. **WebRTC Video Calls**: Virtual pet check-ins and caretaker interviews using existing Socket.io signaling.
+3. **Geospatial Search (2dsphere)**: Filter caretakers and pet listings by distance from user location.
+4. **Reviews & Rating System**: Verified 1-5 star ratings for caretakers post-service completion.
+5. **Input Validation & Rate Limiting**: Zod schema validation + `express-rate-limit` for authentication and posting forms.

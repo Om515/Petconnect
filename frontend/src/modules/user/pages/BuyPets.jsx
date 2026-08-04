@@ -204,14 +204,25 @@ const BuyPets = () => {
                   </div>
                 </div>
                 <div className="p-5">
-                  <h2 className="text-xl font-semibold text-cyan-800 mb-1">{pet.type}</h2>
-                  <p className="text-2xl font-bold text-cyan-600">₹{Number(pet.price).toLocaleString()}</p>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-cyan-800 mb-1">{pet.basicInfo?.name || pet.type}</h2>
+                    {pet.basicInfo?.listingType === "Adoption" && (
+                      <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">
+                        Adoption
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-2xl font-bold text-cyan-600">
+                    {pet.basicInfo?.listingType === "Adoption"
+                      ? (pet.basicInfo?.adoptionFee > 0 ? `₹${Number(pet.basicInfo.adoptionFee).toLocaleString()} (Fee)` : "Free Adoption")
+                      : `₹${Number(pet.price).toLocaleString()}`}
+                  </p>
                   
                   <button
                     onClick={() => navigate(`/pet-details/${pet._id}`)} // Navigate with pet ID
                     className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-300 mt-4"
                   >
-                    Contact Details
+                    View Pet Profile
                   </button>
                 </div>
               </div>
