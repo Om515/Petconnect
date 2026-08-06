@@ -9,6 +9,7 @@ import adminRouter from "./Routes/adminRouter.js";
 import CaretakerRouter from "./Routes/caretakerRoutes.js";
 import authRouter from "./Routes/authRouter.js";
 import chatRouter from "./Routes/chatRouter.js";
+import aiRouter from "./Routes/aiRoutes.js";
 import cloudinary from "cloudinary";
 import seedAdmin from "./Seed/adminSeeder.js";
 import { initSocket } from "./socket.js";
@@ -44,6 +45,7 @@ app.use("/api/user", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/caretaker", CaretakerRouter);
 app.use("/api/chat", chatRouter);
+app.use("/api/ai", aiRouter);
 
 app.get("/", (req, res) => {
   res.send("Api Working");

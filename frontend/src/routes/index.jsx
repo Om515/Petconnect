@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthData } from '../context/AuthContext';
 import { AdminData } from '../modules/admin/context/AdminContext';
+import { PawPrint } from 'lucide-react';
 
 // Layouts
 import PublicLayout from '../layouts/PublicLayout';
@@ -28,6 +29,7 @@ import ForgotPassword from '../modules/user/components/ForgotPassword';
 import Wishlist from '../modules/user/pages/Wishlist';
 import Chat from '../modules/user/pages/Chat';
 import Notifications from '../modules/user/pages/Notifications';
+import PetScanner from '../modules/user/pages/PetScanner';
 
 // Migrated Caretaker Modules
 import CaretakerHome from '../modules/caretaker/pages/Home';
@@ -53,7 +55,21 @@ const AppRoutes = () => {
   const { isAuthenticated, role, loading } = AuthData();
   const { isAuthAdmin } = AdminData();
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-teal-100 flex flex-col items-center justify-center">
+        <div className="relative flex items-center justify-center w-28 h-28 bg-white rounded-full shadow-[0_0_40px_rgba(20,184,166,0.3)] animate-bounce duration-1000">
+          <PawPrint className="text-teal-500 w-14 h-14" />
+          {/* Pulsing ring effect */}
+          <div className="absolute inset-0 border-4 border-teal-300 rounded-full animate-ping opacity-60"></div>
+        </div>
+        <h2 className="mt-8 text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 tracking-wide animate-pulse">
+          Loading PetConnect
+        </h2>
+        <p className="mt-2 text-teal-700/80 font-medium tracking-wider">Unleashing the best furry friends...</p>
+      </div>
+    );
+  }
 
   const roleHome = role === "caretaker" ? "/caretaker" : role === "admin" ? "/admin" : "/";
 
@@ -69,6 +85,7 @@ const AppRoutes = () => {
         <Route path="/sell-pet" element={(isAuthenticated && role === "user") ? <SellPets /> : <Navigate to="/login" />} />
         <Route path="/buy-pet" element={(isAuthenticated && role === "user") ? <BuyPets /> : <Navigate to="/login" />} />
         <Route path="/pet-details/:petId" element={<PetDetails />} />
+        <Route path="/discover" element={<PetScanner />} />
         <Route path="/profile" element={(isAuthenticated && role === "user") ? <UserProfile /> : <Navigate to="/login" />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
