@@ -4,10 +4,9 @@ PETCONNECT 🐾 - COMPLETE PROJECT INFORMATION & AI CONTEXT FILE
 
 PURPOSE OF THIS FILE:
 This text file contains complete, structured technical information about the
-PetConnect project so that any AI reading this file can instantly understand 
-the project architecture, database schemas, API routes, authentication, 
-real-time socket chat system, frontend structure, and business logic to answer 
-questions, suggest improvements, or implement new features.
+PetConnect project so that any developer or AI reading this file can instantly understand 
+the project architecture, database schemas, API routes, authentication, AI multimodal vision 
+services, rate limiting, real-time socket chat system, frontend structure, and business logic.
 
 ================================================================================
 1. PROJECT OVERVIEW
@@ -17,13 +16,11 @@ questions, suggest improvements, or implement new features.
 - Goal: Full-stack web application connecting Pet Owners (Users), Pet Caretakers, 
   and Platform Administrators with real-time social & service features.
 - Core Modules:
-  1. Pet Marketplace (List pets for sale/adoption, browse, buy, verify listings)
-  2. Caretaker Services (Apply to be a caretaker, professional showcase profile, 
-     set rates/services, accept/reject service bookings)
-  3. Real-Time Chat & Connections (Connection requests, Socket.io 1-on-1 chat, 
-     media sharing, typing indicators, read receipts, unread badge notifications)
-  4. Administrative Platform (User management, caretaker application approval, 
-     pet verification, caretaker profile draft side-by-side review)
+  1. Pet Marketplace (List pets for sale/adoption, interactive creation preview wizard, browse, buy, verify listings)
+  2. 🤖 AI Pet Scanner (Powered by Google Gemini 3.5 Flash Vision AI with guest rate limiting for breed identification, health risks, compatibility, & market insights)
+  3. Caretaker Services (Apply to be a caretaker, professional showcase profile, draft versioning engine, set rates/services, accept/reject service bookings)
+  4. Real-Time Chat & Connections (Connection requests handshake, Socket.io 1-on-1 chat, media sharing, typing indicators, read receipts, unread badge notifications)
+  5. Administrative Platform (User management, caretaker application approval, pet verification, caretaker profile draft side-by-side review)
 
 ================================================================================
 2. TECH STACK & CONFIGURATION
@@ -31,10 +28,12 @@ questions, suggest improvements, or implement new features.
 Backend:
 - Node.js (ES Module system "type": "module")
 - Express.js v4.21.2
+- AI Engine: @google/generative-ai (gemini-3.5-flash)
+- Rate Limiting: express-rate-limit v7.5.0
 - Socket.io v4.8.1 (Real-time WebSockets with JWT authentication)
 - Database: MongoDB with Mongoose ORM v8.13.0
 - Auth: JWT (jsonwebtoken v9.0.2) + Passwords hashed with bcrypt v5.1.1 + Google OAuth
-- Middlewares: cookie-parser, body-parser, cors
+- Middlewares: aiRateLimiter.js, isAuth.js, caretakerIsAuth.js, isAdmin.js, authenticate.js, multer.js, cookie-parser, body-parser, cors
 - Media Uploads: Multer + DataURI + Cloudinary v2.6.0
 - Server Entry: server.js
 - Default Port: 7001 (or process.env.PORT)
@@ -45,6 +44,7 @@ Frontend:
 - Routing: react-router-dom v6
 - State Management: React Context API (AuthContext, AdminContext)
 - Styling: Tailwind CSS + Vanilla CSS
+- Iconography & UI: lucide-react, framer-motion, react-hot-toast
 - Sockets: socket.io-client
 - Entry Point: src/main.jsx & src/App.jsx
 
@@ -54,37 +54,71 @@ Frontend:
 petconnect/
 ├── PROJECT_FEATURES_EXPLAINED.md   # Comprehensive Markdown Feature & Tech Guide
 ├── PROJECT_FEATURES_EXPLAINED.txt  # Comprehensive Text Feature & Tech Guide
-├── PROJECT_CONTEXT.md              # High-level AI Markdown Context
-├── PROJECT_INFO.txt                # High-level AI Text Context
+├── CURRENT_PROJECT_DOCUMENTATION.md # Architecture & Module Deep-Dive Markdown Guide
+├── FUNCTIONALITY_DEEPDIVE.md       # Technical Execution & Code-Level Explanations
+├── PROJECT_CONTEXT.md              # High-level AI Context File
+├── PROJECT_INFO.txt                # High-level Developer/AI Text Context File
 ├── README.md                       # Quickstart instructions
 ├── backend/
 │   ├── Config/                     # MongoDB connection
-│   ├── Controllers/                # Business logic by domain (admin, auth, caretaker, chat, pet, user)
-│   ├── Middlewares/                # Auth, role verification, and Multer upload middlewares
+│   ├── Controllers/                # Controllers by domain (admin, aiController, appointment, auth, caretaker, chat, pet, user)
+│   ├── Middlewares/                # aiRateLimiter.js, authenticate.js, caretakerIsAuth.js, isAdmin.js, isAuth.js, multer.js
 │   ├── Models/                     # Mongoose schemas (12 data models)
-│   ├── Routes/                     # Express Routers (adminRouter, authRouter, caretakerRoutes, chatRouter, userRouter)
+│   ├── Routes/                     # Express Routers (adminRouter, aiRoutes, authRouter, caretakerRoutes, chatRouter, userRouter)
 │   ├── Seed/                       # Seeders (adminSeeder.js)
 │   ├── socket.js                   # Socket.io real-time server handler
 │   └── server.js                   # Entry point
 └── frontend/
     └── src/
-        ├── context/                # Global React contexts
+        ├── context/                # Global React contexts (AuthContext.jsx)
         ├── layouts/                # Wrapper layouts (UserLayout, CaretakerLayout, AdminLayout, PublicLayout)
         ├── modules/                # Actor-based modules (admin, caretaker, user)
+        │   ├── admin/              # Admin pages & components (ManageUsers, PetList, AdminProfileReview, CaretakerListAdmin)
+        │   ├── caretaker/          # Caretaker pages & components (CaretakerProfile, CompleteProfessionalProfile, CaretakerApplicationForm)
+        │   └── user/               # User pages & components (Home, BuyPets, SellPets, PetDetails, PetScanner, Wishlist, Chat, Notifications, UserProfile, UserBookings)
         └── routes/                 # Central router definitions & guards
 
 ================================================================================
-4. DATABASE MODELS
+4. API ROUTE MAPPING
 ================================================================================
-1. User Schema (userModel.js): name, email, password, mobile, address, role, lastSeen.
-2. CaretakerApplication Schema (caretakerApplicationModel.js): applicant, experience, skills, rate, status.
-3. CaretakerProfile Schema (caretakerProfileModel.js): version, status, headline, rates, services, gallery, homeEnvironment.
-4. PetOrder Schema (petModel.js): category, breed, price, image, isApproved, soldBool, owner, buyer.
-5. BookingRequest Schema (bookingRequestModel.js): user, caretaker, service, date, hours, totalCost, status.
-6. ConnectionRequest Schema (connectionRequestModel.js): requester, recipient, status.
-7. Conversation Schema (conversationModel.js): participants, lastMessage.
-8. Message Schema (messageModel.js): conversationId, sender, text, image, readBy.
-9. Notification Schema (notificationModel.js): user, sender, type, title, message, read.
+AI Scanner Routes:
+- POST /api/ai/scan-guest  -> Guest AI Scanner (Rate Limited: max 5 req/15 min)
+- POST /api/ai/scan-auth   -> Authenticated AI Scanner (Unlimited)
+
+Auth Routes:
+- POST /api/auth/register
+- POST /api/auth/login
+- POST /api/auth/google
+- POST /api/auth/forgot-password
+
+User Routes:
+- GET  /api/user/buy-pet
+- POST /api/user/sell-pet
+- POST /api/user/book-pet
+- POST /api/user/wishlist/toggle
+- GET  /api/user/wishlist
+
+Caretaker Routes:
+- POST /api/caretaker/apply
+- POST /api/caretaker/professional-profile
+- GET  /api/caretaker/my-profile
+
+Chat & Socket Routes:
+- POST  /api/chat/requests (Send Connection Request)
+- PATCH /api/chat/requests/:id/respond (Accept/Reject Connection)
+- GET   /api/chat/conversations
+- GET   /api/chat/messages/:conversationId
+- POST  /api/chat/messages
+
+Admin Routes:
+- GET  /api/admin/display-users
+- GET  /api/admin/get-pet-list
+- POST /api/admin/approve-pet
+- GET  /api/admin/get-caretaker-list
+- POST /api/admin/approve-caretaker
+- GET  /api/admin/caretaker-profiles/pending
+- POST /api/admin/caretaker-profiles/approve
+- POST /api/admin/caretaker-profiles/reject
 
 ================================================================================
 5. TOP PROPOSED IMPROVEMENTS
@@ -95,3 +129,6 @@ petconnect/
 4. Star Reviews System: Ratings & feedback for completed caretaker bookings.
 5. Input Validation: Zod schema validation & rate limiting on API endpoints.
 6. Socket Redis Adapter: Multi-instance Redis pub/sub scaling for Socket.io.
+
+================================================================================
+*File updated for PetConnect project info.*

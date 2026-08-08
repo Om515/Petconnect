@@ -90,6 +90,17 @@ const Navbar = () => {
         }
     });
 
+    globalSocket.on("notification", (notif) => {
+        setNotificationCount(prev => prev + 1);
+        if (notif.type === "request_accepted") {
+            toast.success("🎉 Your pet request was accepted!", { duration: 5000 });
+        } else if (notif.type === "request_rejected") {
+            toast.error("Your pet request was declined.", { duration: 5000 });
+        } else if (notif.type === "request_received") {
+            toast.success("🐾 New request received for your pet!", { duration: 5000 });
+        }
+    });
+
     return () => globalSocket.disconnect();
   }, [isAuthenticated]);
 
@@ -103,6 +114,12 @@ const Navbar = () => {
     { id: 1, name: "Home", link: "/" },
     { id: 2, name: "Sell Pet", link: "/sell-pet" },
     { id: 3, name: "Buy Pet", link: "/buy-pet" },
+    ...(isAuthenticated && role === "user"
+      ? [
+          { id: 8, name: "My Requests", link: "/my-pet-requests" },
+          { id: 9, name: "Incoming Requests", link: "/owner-pet-requests" },
+        ]
+      : []),
     { id: 4, name: "Pet Care", link: "/caretakers" },
     { id: 5, name: "Contacts", link: "/contact" },
     { 

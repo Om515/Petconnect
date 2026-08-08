@@ -6,15 +6,15 @@ DOCUMENT PURPOSE:
 This text file provides a comprehensive, component-by-component explanation of 
 every feature in the PetConnect project. It details what each feature does, how 
 it works under the hood (frontend UI, API endpoints, backend controllers, Mongoose 
-schemas, and WebSockets), and offers high-impact recommendations for future 
-enhancements.
+schemas, WebSockets, AI Vision services, and rate limiters), and offers high-impact 
+recommendations for future enhancements.
 
 ================================================================================
 1. EXECUTIVE OVERVIEW & SYSTEM ARCHITECTURE
 ================================================================================
 PetConnect is a full-stack monorepo application built with the MERN stack 
 (MongoDB, Express.js, React 18, Node.js). It serves as a unified ecosystem for 
-pet care, pet adoption, e-commerce, and real-time community engagement.
+pet care, pet adoption, e-commerce, AI pet scanning, and real-time community engagement.
 
 Architecture Overview:
 - Monorepo Layout: Dual root folders (/backend and /frontend).
@@ -23,6 +23,8 @@ Architecture Overview:
 - Bi-directional WebSockets: Integrated Socket.io server attached directly to 
   the Node HTTP server for real-time notifications, typing status, presence 
   tracking, and instant messaging.
+- AI Multimodal Pipeline: Integrated with Google Gemini 3.5 Flash Vision API for 
+  automated pet scanner analytics.
 - Media Pipeline: In-memory Multer file buffer parsing combined with DataURI 
   and Cloudinary v2 API for secure image storage.
 
@@ -32,7 +34,7 @@ Architecture Overview:
 WHAT IT DOES:
 Provides secure authentication and user access management across three distinct roles:
 1. User (Default): Pet owners looking to buy/sell pets, search caretakers, book 
-   services, and send connection requests.
+   services, scan pets with AI, and send connection requests.
 2. Caretaker: Verified service providers who showcase professional profiles, 
    set daily/hourly rates, manage service bookings, and interact with pet owners.
 3. Admin: Platform moderators with root privileges to approve pet listings, 
@@ -54,31 +56,58 @@ HOW IT WORKS (TECHNICAL EXECUTION):
 - Frontend Route Protection: Implemented in src/routes/index.jsx via AuthContext.jsx.
 
 ================================================================================
-3. PET E-COMMERCE & LISTING ENGINE
+3. 🤖 AI PET SCANNER & BREED IDENTIFICATION ENGINE
+================================================================================
+WHAT IT DOES:
+Allows users and visitors to upload or capture any pet image to receive instant, 
+deep veterinary and behavioral insights powered by Google Gemini Vision AI.
+
+HOW IT WORKS (TECHNICAL EXECUTION):
+- Backend Controller: backend/Controllers/aiController.js powered by @google/generative-ai (gemini-3.5-flash).
+- Multimodal Processing: Image buffers parsed via Multer are converted into Base64 
+  and sent alongside a strict prompt demanding raw structured JSON output.
+- Metrics Extracted:
+  * Identification: Primary Breed, Confidence Score (0-100%), Possible Mix.
+  * Physical Traits: Estimated Age Stage, Size Category, Weight Range, Grooming Needs.
+  * Behavior & Compatibility: Good with Kids, Good with Other Pets, Energy Level, Trainability.
+  * Market & Financials: Estimated Price Range in INR, Monthly Maintenance Cost.
+  * Health & Care: Breed Health Risks, Dietary Notes, Visual Observations.
+  * Fun Fact: Engaging trivia about the identified pet breed.
+- Rate-Limiting Architecture (aiRateLimiter.js):
+  * Guest Route: POST /api/ai/scan-guest (Rate limited to max 5 requests per 15 min via express-rate-limit).
+  * Auth Route: POST /api/ai/scan-auth (Unrestricted AI scanning for logged-in users).
+- Frontend UI (PetScanner.jsx):
+  * Drag-and-drop uploader + Sample pet selector (Dog, Cat, Parrot, Rabbit).
+  * Animated progress scanning bar with step indicators.
+  * Non-pet image validation handler returning structured error alerts.
+  * Direct action buttons to list pet on market or view similar pets.
+
+================================================================================
+4. PET E-COMMERCE & INTERACTIVE CREATION ENGINE
 ================================================================================
 WHAT IT DOES:
 Allows users to list their pets for sale or adoption and enables other users to 
-search, view details, wishlist, and purchase listed pets.
+search, view details, wishlist, and purchase listed pets. Includes a live preview wizard.
 
 HOW IT WORKS (TECHNICAL EXECUTION):
 - Data Model: Defined in backend/Models/petModel.js (PetOrder).
   Fields: category, type, breed, age, price, description, owner (ref User), 
   buyer (ref User), image ({ id, url }), isVerified (Boolean), isApproved (Boolean), 
   soldBool (Boolean).
-- Selling Flow:
-  1. Frontend form (SellPets.jsx) submits multipart/form-data with pet details.
-  2. Backend POST /api/user/sell-pet processes image via Multer & Cloudinary.
-  3. A new PetOrder document is created with isApproved: false.
+- Multi-Step Interactive Listing Wizard (SellPets.jsx, StepProgress.jsx, PetProfilePreviewCard.jsx):
+  * Step 1: Category & Breed selection.
+  * Step 2: Details (Age, Gender, Price, Location, Description).
+  * Step 3: Images & Live Interactive Card Preview (PetProfilePreviewCard.jsx).
 - Admin Verification Flow:
   1. Admins fetch pending listings via GET /api/admin/get-pet-list.
   2. Approving via POST /api/admin/approve-pet sets isApproved: true and isVerified: true.
 - Marketplace Browsing & Purchasing:
   1. Users query GET /api/user/buy-pet to view verified, unsold listings.
   2. Buying a pet via POST /api/user/book-pet sets soldBool: true and updates buyer.
-- Wishlist Engine: POST /api/user/wishlist/toggle bookmarks pets in user document.
+- Wishlist Engine: POST /api/user/wishlist/toggle bookmarks pets in user document (Wishlist.jsx).
 
 ================================================================================
-4. CARETAKER ONBOARDING & VERIFICATION SYSTEM
+5. CARETAKER ONBOARDING & VERIFICATION SYSTEM
 ================================================================================
 WHAT IT DOES:
 Allows standard user account holders to apply for upgrading their role to a 
@@ -95,7 +124,7 @@ HOW IT WORKS (TECHNICAL EXECUTION):
      to "caretaker", and initializes an empty CaretakerProfile model.
 
 ================================================================================
-5. PROFESSIONAL CARETAKER SHOWCASE & VERSIONING ENGINE
+6. PROFESSIONAL CARETAKER SHOWCASE & VERSIONING ENGINE
 ================================================================================
 WHAT IT DOES:
 Provides caretakers with a rich, multi-section showcase (services, rates, home 
@@ -118,7 +147,7 @@ HOW IT WORKS (TECHNICAL EXECUTION):
   4. POST /api/admin/caretaker-profiles/reject sets draft status to rejected with reason.
 
 ================================================================================
-6. REAL-TIME CONNECTION REQUESTS & SOCKET.IO MESSAGING SYSTEM
+7. REAL-TIME CONNECTION REQUESTS & SOCKET.IO MESSAGING SYSTEM
 ================================================================================
 WHAT IT DOES:
 Facilitates connection building between pet owners and caretakers. Once accepted, 
@@ -141,57 +170,56 @@ HOW IT WORKS (TECHNICAL EXECUTION):
 - Media Messaging: POST /api/chat/messages accepts text + image via Multer/Cloudinary.
 
 ================================================================================
-7. REAL-TIME NOTIFICATION SYSTEM & UNREAD COUNTERS
+8. REAL-TIME NOTIFICATION SYSTEM & UNREAD COUNTERS
 ================================================================================
 WHAT IT DOES:
 Keeps users instantly notified about connection requests, application approvals, 
-messages, and booking updates. Displays persistent unread badges on the Navbar 
-that clear dynamically when read.
+messages, AI scan results, and booking updates. Displays persistent unread badges 
+on the Navbar that clear dynamically when read.
 
 HOW IT WORKS (TECHNICAL EXECUTION):
 - Data Model: backend/Models/notificationModel.js.
   Fields: user, sender, type, title, message, conversationId, read.
-- Real-Time Push: Controller emits io.to(recipientId).emit("notification", doc).
-- Dynamic Un-badging: Opening a chat triggers mark_as_read over socket, updating 
-  DB and clearing Navbar badges instantly.
+- Real-Time Triggering: Saved to MongoDB and pushed instantly over Socket.io:
+  io.to(recipientId).emit("notification", notificationDoc)
+- Dynamic Un-Badging: Opening chat room triggers mark_as_read via WebSockets, 
+  clearing badges across the frontend instantly.
 
 ================================================================================
-8. ADMIN SUPERVISION & PLATFORM CONTROL PANEL
+9. ADMIN SUPERVISION & PLATFORM CONTROL PANEL
 ================================================================================
 WHAT IT DOES:
 Equips platform administrators with oversight tools to maintain platform quality, 
 verify listings, audit caretakers, and monitor transactions.
 
 HOW IT WORKS (TECHNICAL EXECUTION):
-- Admin Auth: Separate /api/admin/login and backend auto-seeding via adminSeeder.js.
-- Control Features: User management, Pet listing verification, Caretaker application 
-  approval, and Professional profile draft auditing.
+- Admin Authentication: Dedicated route /api/admin/login seeded via adminSeeder.js.
+- Control Features:
+  * User Directory: View all users, roles, registration dates (GET /api/admin/display-users).
+  * Pet Moderation: Approve/reject pet listings (GET /api/admin/get-pet-list, POST /api/admin/approve-pet).
+  * Caretaker Verification: Review role applications (GET /api/admin/get-caretaker-list, POST /api/admin/approve-caretaker).
+  * Profile Draft Review: Side-by-side version comparison (GET /api/admin/caretaker-profiles/pending).
 
 ================================================================================
-9. PROPOSED ARCHITECTURAL CHANGES & FEATURE RECOMMENDATIONS
+10. MIDDLEWARE, SECURITY & RATE LIMITING INFRASTRUCTURE
 ================================================================================
-1. Payment Gateway Integration (Stripe / Razorpay):
-   Implement Stripe escrow checkout for bookings and pet purchases with webhook 
-   handlers (/api/webhooks/stripe).
+WHAT IT DOES:
+Protects backend API endpoints from brute-force spam, unauthenticated access, and memory overflows.
 
-2. Enhanced Security & Input Validation:
-   Add Zod/Joi schema validation on endpoints, express-rate-limit on auth/sales, 
-   and Helmet.js HTTP header protection.
-
-3. Voice / Video Calls for Pet Owners & Caretakers (WebRTC):
-   Leverage existing Socket.io signaling to enable WebRTC peer-to-peer audio/video 
-   calls for virtual pet check-ins and interviews.
-
-4. Interactive Booking Calendar & Time-Slot System:
-   Upgrade CaretakerProfile to support time-slot scheduling (morning/evening) and 
-   blackout dates with frontend FullCalendar components.
-
-5. Advanced Search, Geospatial Filtering & Reviews System:
-   Add MongoDB 2dsphere indexing for "Find Caretakers / Pets Near Me" filtering and 
-   a 1-5 star Review & Rating system for completed bookings.
-
-6. Socket.io Scalability with Redis Adapter:
-   Connect @socket.io/redis-adapter for seamless multi-instance server scaling.
+HOW IT WORKS (TECHNICAL EXECUTION):
+- aiRateLimiter.js: Uses express-rate-limit to cap guest AI scans at 5 per 15 minutes.
+- multer.js: In-memory buffer upload middleware with file type and size restrictions.
+- Auth Guards: isAuth.js, caretakerIsAuth.js, isAdmin.js, authenticate.js enforcing JWT security.
 
 ================================================================================
-*Documentation generated for PetConnect codebase review & upgrade roadmap.*
+11. PROPOSED ARCHITECTURAL CHANGES & FEATURE RECOMMENDATIONS
+================================================================================
+1. Payment Gateway Integration: Stripe / Razorpay checkout for pet sales & caretaker escrow.
+2. WebRTC Video Calling: Peer-to-peer audio/video calls for virtual pet interviews and check-ins.
+3. Geospatial Indexing: MongoDB 2dsphere indexing for location-based distance sorting.
+4. Review & Rating Engine: Verified 1-5 star reviews for caretakers after completed bookings.
+5. Zod Input Validation & Security Hardening: Strict request payload validation & Helmet.js headers.
+6. Socket Redis Adapter: Redis pub/sub adapter for scaling Socket.io across multiple server nodes.
+
+================================================================================
+*File updated for PetConnect project features overview.*

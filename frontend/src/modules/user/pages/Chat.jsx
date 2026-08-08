@@ -2,11 +2,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { Send, ArrowLeft, MessageCircle, CheckCheck, Calendar, Paperclip, X, Trash2 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { AuthData } from '../../../context/AuthContext';
 
 const Chat = () => {
     const { user } = AuthData();
+    const location = useLocation();
+    const targetConvoId = location.state?.conversationId;
     const [conversations, setConversations] = useState([]);
     const [activeConvo, setActiveConvo] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -33,14 +36,21 @@ const Chat = () => {
     useEffect(() => {
         axios.get("/api/chat/conversations").then((res) => {
             if (res.data.success) {
-                setConversations(res.data.conversations);
+                const convos = res.data.conversations || [];
+                setConversations(convos);
+                if (targetConvoId) {
+                    const match = convos.find(c => c._id === targetConvoId);
+                    if (match) {
+                        setActiveConvo(match);
+                    }
+                }
             }
             setLoading(false);
         }).catch(err => {
             console.error(err);
             setLoading(false);
         });
-    }, []);
+    }, [targetConvoId]);
 
     // Initialize Socket
     useEffect(() => {
