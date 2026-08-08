@@ -14,7 +14,12 @@ const conversationSchema = new mongoose.Schema({
     requestId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ConnectionRequest',
-        required: true
+        required: false
+    },
+    petRequestId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'PetRequest',
+        required: false
     },
     lastMessage: {
         type: String,

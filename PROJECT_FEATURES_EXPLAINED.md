@@ -1,25 +1,27 @@
 # 🐾 PetConnect-MERN: Complete Feature & Technical Architecture Guide
 
-> **Document Purpose:** This document provides a comprehensive, component-by-component explanation of every feature in the **PetConnect** project. It details what each feature does, how it works under the hood (frontend UI, API endpoints, backend controllers, Mongoose schemas, and WebSockets), and offers high-impact recommendations for future enhancements.
+> **Document Purpose:** This document provides a comprehensive, component-by-component explanation of every feature in the **PetConnect** project. It details what each feature does, how it works under the hood (frontend UI, API endpoints, backend controllers, Mongoose schemas, WebSockets, and AI services), and offers high-impact recommendations for future enhancements.
 
 ---
 
 ## 📋 Table of Contents
 1. [Executive Overview & System Architecture](#1-executive-overview--system-architecture)
 2. [Role-Based Access Control (RBAC) & Authentication](#2-role-based-access-control-rbac--authentication)
-3. [Pet E-Commerce & Listing Engine](#3-pet-e-commerce--listing-engine)
-4. [Caretaker Onboarding & Verification System](#4-caretaker-onboarding--verification-system)
-5. [Professional Caretaker Showcase & Versioning Engine](#5-professional-caretaker-showcase--versioning-engine)
-6. [Real-Time Connection Requests & Socket.io Messaging System](#6-real-time-connection-requests--socketio-messaging-system)
-7. [Real-Time Notification System & Unread Counters](#7-real-time-notification-system--unread-counters)
-8. [Admin Supervision & Platform Control Panel](#8-admin-supervision--platform-control-panel)
-9. [Proposed Architectural Changes & Feature Recommendations](#9-proposed-architectural-changes--feature-recommendations)
+3. [🤖 AI Pet Scanner & Breed Identification Engine](#3--ai-pet-scanner--breed-identification-engine)
+4. [Pet E-Commerce & Interactive Creation Engine](#4-pet-e-commerce--interactive-creation-engine)
+5. [Caretaker Onboarding & Verification System](#5-caretaker-onboarding--verification-system)
+6. [Professional Caretaker Showcase & Versioning Engine](#6-professional-caretaker-showcase--versioning-engine)
+7. [Real-Time Connection Requests & Socket.io Messaging System](#7-real-time-connection-requests--socketio-messaging-system)
+8. [Real-Time Notification System & Unread Counters](#8-real-time-notification-system--unread-counters)
+9. [Admin Supervision & Platform Control Panel](#9-admin-supervision--platform-control-panel)
+10. [Middleware, Security & Rate Limiting Infrastructure](#10-middleware-security--rate-limiting-infrastructure)
+11. [Proposed Architectural Changes & Feature Recommendations](#11-proposed-architectural-changes--feature-recommendations)
 
 ---
 
 ## 1. Executive Overview & System Architecture
 
-**PetConnect** is a full-stack monorepo application built with the **MERN** stack (**M**ongoDB, **E**xpress.js, **R**eact 18, **N**ode.js). It serves as a unified ecosystem for pet care, pet adoption, e-commerce, and real-time community engagement.
+**PetConnect** is a full-stack monorepo application built with the **MERN** stack (**M**ongoDB, **E**xpress.js, **R**eact 18, **N**ode.js). It serves as a unified ecosystem for pet care, pet adoption, e-commerce, AI pet analysis, and real-time community engagement.
 
 ```
                   ┌───────────────────────────────────────────┐
@@ -31,19 +33,20 @@
                   ┌───────────────────────────────────────────┐
                   │            Express.js API Server          │
                   │        Node.js + Socket.io Server         │
-                  └──────┬──────────────┬──────────────┬──────┘
-                         │              │              │
-                         ▼              ▼              ▼
-                 ┌──────────────┐ ┌───────────┐ ┌──────────────┐
-                 │ MongoDB Atlas│ │Cloudinary │ │ Google OAuth │
-                 │ Database     │ │Media Store│ │ API Auth     │
-                 └──────────────┘ └───────────┘ └──────────────┘
+                  └─────┬───────┬───────┬────────┬───────┬────┘
+                        │       │       │        │       │
+                        ▼       ▼       ▼        ▼       ▼
+                 ┌────────┐ ┌──────┐ ┌──────┐ ┌─────┐ ┌─────────┐
+                 │MongoDB │ │Cloud-│ │Google│ │Gem- │ │  Rate   │
+                 │ Atlas  │ │inary │ │OAuth │ │iniAI│ │Limiter  │
+                 └────────┘ └──────┘ └──────┘ └─────┘ └─────────┘
 ```
 
 ### Core Architecture Highlights:
 - **Monorepo Layout**: Dual root folders (`/backend` and `/frontend`).
 - **Domain-Driven Frontend**: Frontend components are strictly partitioned by actor in `src/modules/{user|caretaker|admin}`.
 - **Bi-directional WebSockets**: Integrated `Socket.io` server attached directly to the Node HTTP server for real-time notifications, typing status, presence tracking, and instant messaging.
+- **AI Multimodal Integration**: Powered by Google Gemini Vision API (`gemini-3.5-flash`) for automated pet scanning and breed analytics.
 - **Media Pipeline**: In-memory `Multer` file buffer parsing combined with `DataURI` and `Cloudinary v2` API for secure image storage.
 
 ---
@@ -52,7 +55,7 @@
 
 ### 💡 What It Does
 Provides secure authentication and user access management across three distinct roles:
-1. **User (Default)**: Pet owners looking to buy/sell pets, search caretakers, book services, and send connection requests.
+1. **User (Default)**: Pet owners looking to buy/sell pets, search caretakers, book services, scan pets with AI, and send connection requests.
 2. **Caretaker**: Verified service providers who showcase professional profiles, set daily/hourly rates, manage service bookings, and interact with pet owners.
 3. **Admin**: Platform moderators with root privileges to approve pet listings, review caretaker applications, approve professional profile drafts, and inspect user accounts.
 
@@ -69,10 +72,44 @@ Provides secure authentication and user access management across three distinct 
 
 ---
 
-## 3. Pet E-Commerce & Listing Engine
+## 3. 🤖 AI Pet Scanner & Breed Identification Engine
 
 ### 💡 What It Does
-Allows users to list their pets for sale or adoption and enables other users to search, view details, wishlist, and purchase listed pets.
+Allows users and visitors to upload or capture any pet image to receive instant, deep veterinary and behavioral insights powered by Google Gemini Vision AI.
+
+```
+[Upload Pet Image] ──► [Memory Buffer] ──► [Rate Limiter Check] ──► [Gemini Vision API]
+                                                                          │
+                                                                          ▼
+[Structured Result Card] ◄── [JSON Sanitizer] ◄── [AI Analysis Engine] ◄───┘
+```
+
+### ⚙️ How It Works (Technical Execution)
+- **AI Controller**: `backend/Controllers/aiController.js` initialized with `@google/generative-ai` using `gemini-3.5-flash`.
+- **Multimodal Payload**: Image memory buffers parsed via `Multer` are converted into Base64 format and submitted with a strict prompt demanding raw structured JSON output.
+- **Extracted Metrics**:
+  - **Identification**: Primary Breed, Confidence Score (0-100%), Possible Breed Mix.
+  - **Physical Traits**: Estimated Age Stage, Size Category, Weight Range, Grooming Needs.
+  - **Behavior & Compatibility**: Good with Kids (Boolean), Good with Other Pets (Boolean), Energy Level, Trainability.
+  - **Market & Financials**: Estimated Market Price Range in INR, Monthly Maintenance Cost.
+  - **Health & Veterinary**: Common Breed Health Risks, Dietary Notes, Visual Observations.
+  - **Fun Fact**: Engaging trivia about the identified breed.
+- **Rate-Limiting Strategy**:
+  - `router.post("/scan-guest", aiGuestLimiter, ...)`: Enforces `express-rate-limit` (max 5 AI scans per 15 minutes for guest users).
+  - `router.post("/scan-auth", isAuth, ...)`: Provides un-throttled AI scanning for logged-in users.
+- **Frontend UI (`PetScanner.jsx`)**:
+  - Interactive drag-and-drop file uploader with image preview.
+  - Built-in sample pet selector (Dog, Cat, Parrot, Rabbit) for quick testing.
+  - Dynamic loading progress bar with step-by-step scanning indicators.
+  - Validation handler: Rejects non-pet images with friendly user feedback.
+  - Direct CTA buttons: "List Pet on Marketplace" or "Browse Similar Pets".
+
+---
+
+## 4. Pet E-Commerce & Interactive Creation Engine
+
+### 💡 What It Does
+Allows users to list their pets for sale or adoption and enables other users to search, view details, wishlist, and purchase listed pets. Features a live multi-step listing wizard.
 
 ```
 [User Posts Pet] ──► [Uploaded to Cloudinary] ──► [Status: Pending Admin Review]
@@ -89,10 +126,11 @@ Allows users to list their pets for sale or adoption and enables other users to 
 ### ⚙️ How It Works (Technical Execution)
 - **Data Model**: Defined in `backend/Models/petModel.js` (`PetOrder`).
   - Fields: `category`, `type`, `breed`, `age`, `price`, `description`, `owner` (ref `User`), `buyer` (ref `User`), `image` (`{ id, url }`), `isVerified` (Boolean), `isApproved` (Boolean), `soldBool` (Boolean).
-- **Selling Flow**:
-  1. Frontend form (`SellPets.jsx`) submits `multipart/form-data` with pet details and image.
-  2. Backend `userRouter.post("/sell-pet", isAuth, uploadFile, sellPet)` processes the image with Multer and uploads it to Cloudinary.
-  3. A new `PetOrder` document is created with `isApproved: false`.
+- **Interactive Multi-Step Listing Wizard (`SellPets.jsx`)**:
+  - **Step 1**: Category & Breed selection with live autocompletion.
+  - **Step 2**: Pet Details (Age, Gender, Price, Location, Description).
+  - **Step 3**: Image Upload & Live Preview Card (`PetProfilePreviewCard.jsx`, `StepProgress.jsx`).
+  - **Live Preview Card**: Renders real-time visual feedback of how the listing will look on the marketplace before submission.
 - **Admin Verification Flow**:
   1. Admins fetch pending listings via `GET /api/admin/get-pet-list`.
   2. Approving via `POST /api/admin/approve-pet` sets `isApproved: true` and `isVerified: true`.
@@ -100,11 +138,11 @@ Allows users to list their pets for sale or adoption and enables other users to 
   1. Users query `GET /api/user/buy-pet` to view verified, unsold listings (`isApproved: true`, `soldBool: false`).
   2. Buying a pet via `POST /api/user/book-pet` sets `soldBool: true` and updates `buyer` to the purchasing user's ID.
 - **Wishlist Engine**:
-  - `POST /api/user/wishlist/toggle` allows users to bookmark/un-bookmark pets stored in their user profile document.
+  - `POST /api/user/wishlist/toggle` allows users to bookmark/un-bookmark pets stored in their user profile document (`Wishlist.jsx`).
 
 ---
 
-## 4. Caretaker Onboarding & Verification System
+## 5. Caretaker Onboarding & Verification System
 
 ### 💡 What It Does
 Allows standard `user` account holders to apply for upgrading their role to a verified `caretaker`.
@@ -124,7 +162,7 @@ Allows standard `user` account holders to apply for upgrading their role to a ve
 
 ---
 
-## 5. Professional Caretaker Showcase & Versioning Engine
+## 6. Professional Caretaker Showcase & Versioning Engine
 
 ### 💡 What It Does
 Provides caretakers with a rich, multi-section showcase (services, rates, home environment, trust badges, gallery, availability calendar, and safety info) and protects platform quality through an **Admin Draft Approval & Version Archiving** flow.
@@ -160,7 +198,7 @@ Provides caretakers with a rich, multi-section showcase (services, rates, home e
 
 ---
 
-## 6. Real-Time Connection Requests & Socket.io Messaging System
+## 7. Real-Time Connection Requests & Socket.io Messaging System
 
 ### 💡 What It Does
 Facilitates connection building between pet owners and caretakers (or between pet owners). Users must send a Connection Request; once accepted, a 1-on-1 real-time chat room is unlocked featuring instant messaging, file uploads, read receipts, typing indicators, and online/offline status.
@@ -188,10 +226,10 @@ Facilitates connection building between pet owners and caretakers (or between pe
 
 ---
 
-## 7. Real-Time Notification System & Unread Counters
+## 8. Real-Time Notification System & Unread Counters
 
 ### 💡 What It Does
-Keeps users instantly notified about connection requests, application approvals, new messages, and booking updates. Displays persistent unread badges on the navigation bar that clear dynamically when read.
+Keeps users instantly notified about connection requests, application approvals, new messages, AI scan results, and booking updates. Displays persistent unread badges on the navigation bar that clear dynamically when read.
 
 ### ⚙️ How It Works (Technical Execution)
 - **Data Model**: `backend/Models/notificationModel.js`.
@@ -206,7 +244,7 @@ Keeps users instantly notified about connection requests, application approvals,
 
 ---
 
-## 8. Admin Supervision & Platform Control Panel
+## 9. Admin Supervision & Platform Control Panel
 
 ### 💡 What It Does
 Equips platform administrators with oversight tools to maintain platform quality, verify listings, audit caretakers, and monitor transactions.
@@ -221,7 +259,19 @@ Equips platform administrators with oversight tools to maintain platform quality
 
 ---
 
-## 9. Proposed Architectural Changes & Feature Recommendations
+## 10. Middleware, Security & Rate Limiting Infrastructure
+
+### 💡 What It Does
+Protects backend API endpoints from brute-force spam, unauthenticated access, and memory overflows.
+
+### ⚙️ How It Works (Technical Execution)
+- **`aiRateLimiter.js`**: Employs `express-rate-limit` to restrict unauthenticated guest calls to `/api/ai/scan-guest` (max 5 requests per 15-minute window).
+- **`multer.js`**: In-memory buffer parsing configured for image mime-types (`image/jpeg`, `image/png`, `image/webp`) with file size limits (5MB).
+- **`isAuth.js` / `caretakerIsAuth.js` / `isAdmin.js`**: Multi-tier JWT authorization checking token signatures and payload roles before forwarding requests to controllers.
+
+---
+
+## 11. Proposed Architectural Changes & Feature Recommendations
 
 Based on a thorough review of the codebase, here are the most impactful technical and functional improvements recommended for PetConnect:
 
@@ -235,7 +285,7 @@ Based on a thorough review of the codebase, here are the most impactful technica
 - **Current State**: Basic controller checks exist, but schema validation could be tightened.
 - **Recommended Change**:
   - Introduce **Zod** or **Joi** request validation middleware on all API endpoints.
-  - Implement `express-rate-limit` to prevent brute-force attacks on `/api/auth/login` and `/api/user/sell-pet`.
+  - Implement `express-rate-limit` across auth routes (`/api/auth/login` and `/api/user/sell-pet`).
   - Configure **Helmet.js** middleware for HTTP security header hardening.
 
 ### 📱 3. Voice / Video Calls for Pet Owners & Caretakers (WebRTC)

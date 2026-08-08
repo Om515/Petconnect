@@ -27,10 +27,15 @@ const app = express();
 const port = process.env.PORT || 7001;
 
 // middlewares
-app.use(express.json({ limit: "50mb" }));
+app.use(
+  express.json({
+    limit: "50mb",
+    verify: (req, res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 app.use(cors());
 
@@ -52,7 +57,7 @@ app.get("/", (req, res) => {
 });
 
 // Start Express & Socket.io Server
-const server = app.listen(port, () => {
+const server = app.listen(port, "0.0.0.0", () => {
   console.log(`Server is running on http://localhost:${port}`);
   initSocket(server);
 });

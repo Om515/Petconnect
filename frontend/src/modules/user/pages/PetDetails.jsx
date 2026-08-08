@@ -25,10 +25,13 @@ import {
   Smile,
   FileText,
   ExternalLink,
+  Star,
+  X,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { AuthData } from "../../../context/AuthContext";
+import PetRequestModal from "../components/PetRequestModal";
 
 const PetDetails = () => {
   const { petId } = useParams();
@@ -40,6 +43,14 @@ const PetDetails = () => {
   const [isRequesting, setIsRequesting] = useState(false);
   const [activeMedia, setActiveMedia] = useState(null);
   const [docModal, setDocModal] = useState(null);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [activePetRequest, setActivePetRequest] = useState(null);
+  const [ownerReputation, setOwnerReputation] = useState({
+    averageRating: 0,
+    totalCount: 0,
+    reviews: [],
+  });
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
 
   const { user, setUser } = AuthData();
   const isWishlisted = user?.wishlist?.includes(petId) || false;
@@ -123,6 +134,18 @@ const PetDetails = () => {
           }
         })
         .catch((err) => console.error(err));
+
+      axios
+        .get("/api/user/pet-requests")
+        .then((res) => {
+          if (res.data.success) {
+            const req = res.data.petRequests?.find(
+              (r) => (r.petId?._id || r.petId) === petId && ["Pending", "Accepted"].includes(r.requestStatus)
+            );
+            if (req) setActivePetRequest(req);
+          }
+        })
+        .catch((err) => console.error("Error checking pet request status:", err));
     }
   }, [petId, user]);
 
@@ -152,6 +175,23 @@ const PetDetails = () => {
         setLoading(false);
       });
   }, [petId]);
+
+  useEffect(() => {
+    if (petDetails?.owner?._id) {
+      axios
+        .get(`/api/user/reviews/owner/${petDetails.owner._id}`)
+        .then((res) => {
+          if (res.data.success) {
+            setOwnerReputation({
+              averageRating: res.data.averageRating || 0,
+              totalCount: res.data.totalCount || 0,
+              reviews: res.data.reviews || [],
+            });
+          }
+        })
+        .catch((err) => console.error("Error fetching owner reviews:", err));
+    }
+  }, [petDetails]);
 
   if (loading) {
     return (
@@ -373,24 +413,34 @@ const PetDetails = () => {
             {/* Primary Action Buttons */}
             {!petDetails.soldBool && (
               <div className="space-y-3 pt-2">
-                <button
-                  onClick={handleBookPet}
-                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-extrabold py-4 rounded-2xl hover:from-cyan-700 hover:to-blue-700 transition-all shadow-lg text-center text-lg flex items-center justify-center gap-2"
-                >
-                  <Sparkles className="w-5 h-5" /> Adopt / Buy Pet Now
-                </button>
-                <button
-                  onClick={handleMessageOwner}
-                  disabled={isRequesting}
-                  className="w-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold py-3.5 rounded-2xl hover:bg-emerald-100 transition-all text-center flex items-center justify-center gap-2"
-                >
-                  <MessageCircle className="w-5 h-5 text-emerald-600" />
-                  {requestStatus === "pending"
-                    ? "Connection Request Pending"
-                    : requestStatus === "accepted"
-                    ? "Open Chat with Seller"
-                    : "Send Chat Request to Owner"}
-                </button>
+                {activePetRequest?.requestStatus === "Accepted" ? (
+                  <button
+                    onClick={() => navigate("/chat", { state: { conversationId: activePetRequest.conversationId } })}
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white font-extrabold py-4 rounded-2xl transition-all shadow-md text-center text-lg flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <MessageCircle className="w-5 h-5 text-white" />
+                    Chat with Owner
+                  </button>
+                ) : activePetRequest?.requestStatus === "Pending" ? (
+                  <div className="w-full bg-amber-50 text-amber-800 border border-amber-300 font-bold py-4 rounded-2xl text-center text-sm flex items-center justify-center gap-2 shadow-sm">
+                    <Clock className="w-5 h-5 text-amber-600" />
+                    Request Pending — Chat unlocks once owner accepts
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      if (!user) {
+                        toast.error("Please login to request a pet");
+                        return;
+                      }
+                      setIsRequestModalOpen(true);
+                    }}
+                    className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-extrabold py-4 rounded-2xl hover:from-cyan-700 hover:to-blue-700 transition-all shadow-lg text-center text-lg flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    {listingType === "Sale" ? "Request Purchase" : "Request Adoption"}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -641,15 +691,32 @@ const PetDetails = () => {
           </div>
         </div>
 
-        {/* SECTION 8: SELLER INFORMATION CARD */}
+        {/* SECTION 8: SELLER INFORMATION & REPUTATION CARD */}
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-8 space-y-4">
           <div className="flex items-center justify-between border-b pb-3">
             <h2 className="text-xl font-extrabold text-gray-900 flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-cyan-600" /> Verified Seller Profile
             </h2>
-            <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold border border-emerald-200">
-              System Verified
-            </span>
+            <div className="flex items-center gap-2">
+              {ownerReputation.totalCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setShowReviewsModal(true)}
+                  className="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-full text-xs font-black border border-amber-200 flex items-center gap-1 cursor-pointer transition"
+                >
+                  <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                  <span>{ownerReputation.averageRating}</span>
+                  <span className="text-gray-500 font-semibold">({ownerReputation.totalCount} {ownerReputation.totalCount === 1 ? "review" : "reviews"})</span>
+                </button>
+              ) : (
+                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold border border-gray-200">
+                  No reviews yet
+                </span>
+              )}
+              <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold border border-emerald-200">
+                System Verified
+              </span>
+            </div>
           </div>
 
           <div className="p-6 bg-cyan-50/60 rounded-2xl border border-cyan-100 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -669,15 +736,89 @@ const PetDetails = () => {
                 <Phone className="w-4 h-4 text-cyan-600" /> {owner.mobile || "Contact Verified"}
               </div>
             </div>
-            <div className="md:col-span-3 pt-2 border-t border-cyan-100/80">
-              <span className="text-xs font-bold text-gray-400 uppercase">Registered Address</span>
-              <div className="text-sm font-bold text-gray-800 mt-1 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-cyan-600" /> {owner.address || "Address Verified"}
+            <div className="md:col-span-3 pt-2 border-t border-cyan-100/80 flex justify-between items-center">
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase">Registered Address</span>
+                <div className="text-sm font-bold text-gray-800 mt-1 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-cyan-600" /> {owner.address || "Address Verified"}
+                </div>
               </div>
+              {ownerReputation.totalCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowReviewsModal(true)}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-extrabold transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Star className="w-4 h-4 fill-white" /> View Seller Reviews
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* SELLER REVIEWS MODAL */}
+      {showReviewsModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 relative border border-gray-100 animate-fadeIn max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h3 className="text-xl font-black text-gray-900">Seller Reviews ({ownerReputation.totalCount})</h3>
+                <p className="text-xs text-gray-500 font-semibold">
+                  Overall Rating: <strong className="text-amber-600">⭐ {ownerReputation.averageRating} / 5.0</strong>
+                </p>
+              </div>
+              <button
+                onClick={() => setShowReviewsModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto space-y-3 pr-1 flex-1">
+              {ownerReputation.reviews.map((rev) => (
+                <div key={rev._id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-amber-400">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          className={`w-4 h-4 ${s <= rev.rating ? "text-amber-400 fill-amber-400" : "text-gray-300"}`}
+                        />
+                      ))}
+                      <span className="text-xs font-black text-gray-800 ml-1">{rev.rating}.0</span>
+                    </div>
+                    <span className="text-[11px] text-gray-400 font-medium">
+                      {new Date(rev.createdAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-gray-700 font-medium italic leading-relaxed">
+                    "{rev.comment || "Great experience!"}"
+                  </p>
+
+                  <div className="text-[11px] text-gray-500 font-bold flex items-center justify-between pt-1 border-t border-gray-200/60">
+                    <span>— {rev.reviewerId?.name || "Verified Buyer"}</span>
+                    {rev.petId?.breed && <span className="text-cyan-700">Adopted {rev.petId.breed}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setShowReviewsModal(false)}
+              className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-extrabold rounded-xl text-xs transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* DOCUMENT CERTIFICATE LIGHTBOX PREVIEW MODAL */}
       {docModal && (
@@ -716,6 +857,16 @@ const PetDetails = () => {
           </div>
         </div>
       )}
+
+      {/* PET REQUEST MODAL */}
+      <PetRequestModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        pet={petDetails}
+        onSuccess={(newRequest) => {
+          setActivePetRequest(newRequest);
+        }}
+      />
     </div>
   );
 };

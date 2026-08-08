@@ -12,12 +12,17 @@ import {
   Eye,
   MessageCircle,
   MapPin,
+  FileText,
+  Inbox,
+  Star,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import EditProfileModal from "./EditProfileModal"; 
-import EditAddressModal from "./EditAddressModal"; 
+import EditProfileModal from "./EditProfileModal";
+import EditAddressModal from "./EditAddressModal";
 import SetPasswordModal from "./SetPasswordModal";
-import toast from "react-hot-toast"
+import OwnerPetRequestsManager from "../components/OwnerPetRequestsManager";
+import UserPetRequests from "./UserPetRequests";
+import toast from "react-hot-toast";
 
 export default function UserProfile() {
   const [userData, setUserData] = useState(null);
@@ -27,11 +32,43 @@ export default function UserProfile() {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showSetPasswordModal, setShowSetPasswordModal] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState(null);
+  const [userReviews, setUserReviews] = useState({
+    averageRating: 0,
+    totalCount: 0,
+    reviews: [],
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchUserData();
   }, []);
+
+  useEffect(() => {
+    if (userData?._id) {
+      axios
+        .get(`/api/user/reviews/owner/${userData._id}`)
+        .then((res) => {
+          if (res.data.success && res.data.totalCount > 0) {
+            setUserReviews({
+              averageRating: res.data.averageRating,
+              totalCount: res.data.totalCount,
+              reviews: res.data.reviews,
+            });
+          } else {
+            axios.get(`/api/user/reviews/buyer/${userData._id}`).then((bRes) => {
+              if (bRes.data.success) {
+                setUserReviews({
+                  averageRating: bRes.data.averageRating,
+                  totalCount: bRes.data.totalCount,
+                  reviews: bRes.data.reviews,
+                });
+              }
+            });
+          }
+        })
+        .catch((e) => console.error(e));
+    }
+  }, [userData]);
 
   const fetchUserData = () => {
     setLoading(true);
@@ -42,9 +79,9 @@ export default function UserProfile() {
       .then(([profileRes, appRes]) => {
         setUserData(profileRes.data);
         if (appRes.data?.success && appRes.data.applications?.length > 0) {
-           // Get the latest application status
-           const latest = appRes.data.applications[appRes.data.applications.length - 1];
-           setApplicationStatus(latest.status); // "pending", "approved", or "rejected"
+          // Get the latest application status
+          const latest = appRes.data.applications[appRes.data.applications.length - 1];
+          setApplicationStatus(latest.status); // "pending", "approved", or "rejected"
         }
         setLoading(false);
       })
@@ -89,8 +126,8 @@ export default function UserProfile() {
         <p className="text-red-600">
           Unable to load your profile. Please try again later.
         </p>
-        <button 
-          onClick={fetchUserData} 
+        <button
+          onClick={fetchUserData}
           className="mt-2 px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600"
         >
           Retry
@@ -135,22 +172,20 @@ export default function UserProfile() {
         <div className="flex border-b overflow-x-auto">
           <button
             onClick={() => setActiveTab("profile")}
-            className={`flex items-center px-6 py-4 border-b-2 font-medium ${
-              activeTab === "profile"
+            className={`flex items-center px-6 py-4 border-b-2 font-medium ${activeTab === "profile"
                 ? "border-cyan-500 text-cyan-500"
                 : "border-transparent hover:text-gray-700"
-            }`}
+              }`}
           >
             <User className="mr-2 h-5 w-5" />
             Profile
           </button>
           <button
             onClick={() => setActiveTab("selling")}
-            className={`flex items-center px-6 py-4 border-b-2 font-medium ${
-              activeTab === "selling"
+            className={`flex items-center px-6 py-4 border-b-2 font-medium ${activeTab === "selling"
                 ? "border-cyan-500 text-cyan-500"
                 : "border-transparent hover:text-gray-700"
-            }`}
+              }`}
           >
             <CircleDollarSign className="mr-2 h-5 w-5" />
             My Listings
@@ -160,11 +195,10 @@ export default function UserProfile() {
           </button>
           <button
             onClick={() => setActiveTab("purchased")}
-            className={`flex items-center px-6 py-4 border-b-2 font-medium ${
-              activeTab === "purchased"
+            className={`flex items-center px-6 py-4 border-b-2 font-medium ${activeTab === "purchased"
                 ? "border-cyan-500 text-cyan-500"
                 : "border-transparent hover:text-gray-700"
-            }`}
+              }`}
           >
             <ShoppingBag className="mr-2 h-5 w-5" />
             Purchased
@@ -172,10 +206,38 @@ export default function UserProfile() {
               {buyPetDetails.length}
             </span>
           </button>
+          <button
+            onClick={() => setActiveTab("requests")}
+            className={`flex items-center px-6 py-4 border-b-2 font-medium ${activeTab === "requests"
+                ? "border-cyan-500 text-cyan-500"
+                : "border-transparent hover:text-gray-700"
+              }`}
+          >
+            <Inbox className="mr-2 h-5 w-5 text-cyan-500" />
+            Incoming Requests
+          </button>
+          <button
+            onClick={() => setActiveTab("my-requests")}
+            className={`flex items-center px-6 py-4 border-b-2 font-medium ${activeTab === "my-requests"
+                ? "border-cyan-500 text-cyan-500"
+                : "border-transparent hover:text-gray-700"
+              }`}
+          >
+            <FileText className="mr-2 h-5 w-5 text-cyan-500" />
+            My Pet Requests
+          </button>
         </div>
 
         {/* Content based on active tab */}
         <div className="p-6 bg-cyan-50">
+          {activeTab === "requests" && (
+            <OwnerPetRequestsManager />
+          )}
+
+          {activeTab === "my-requests" && (
+            <UserPetRequests />
+          )}
+
           {activeTab === "profile" && (
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-lg shadow-sm border border-cyan-100">
@@ -204,7 +266,7 @@ export default function UserProfile() {
                 </div>
 
                 {user.authProvider === 'google' && (
-                  <button 
+                  <button
                     onClick={() => setShowSetPasswordModal(true)}
                     className="mt-6 w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 text-sm font-medium transition duration-200 shadow-md flex items-center justify-center cursor-pointer"
                   >
@@ -217,7 +279,7 @@ export default function UserProfile() {
                   <h2 className="text-xl font-semibold text-cyan-800">
                     Address
                   </h2>
-                  <button 
+                  <button
                     onClick={() => setShowAddressModal(true)}
                     className="px-3 py-1 bg-cyan-100 text-cyan-700 rounded-lg hover:bg-cyan-200 text-sm flex items-center"
                   >
@@ -228,8 +290,65 @@ export default function UserProfile() {
                   {user.address || "No address added yet."}
                 </p>
               </div>
+
+              {/* User Reputation & Verified Reviews Card */}
+              <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-cyan-100 space-y-4">
+                <div className="flex items-center justify-between border-b border-cyan-100 pb-3">
+                  <h2 className="text-xl font-semibold text-cyan-800 flex items-center gap-2">
+                    <Star className="w-5 h-5 text-amber-500 fill-amber-500" /> Platform Reputation & Reviews
+                  </h2>
+                  {userReviews.totalCount > 0 ? (
+                    <span className="px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-full text-xs font-bold">
+                      ⭐ {userReviews.averageRating} ({userReviews.totalCount} {userReviews.totalCount === 1 ? "review" : "reviews"})
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">
+                      No reviews yet
+                    </span>
+                  )}
+                </div>
+
+                {userReviews.totalCount > 0 ? (
+                  <div className="space-y-3">
+                    {userReviews.reviews.map((rev) => (
+                      <div key={rev._id} className="p-4 bg-cyan-50/40 rounded-xl border border-cyan-100 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1 text-amber-400">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                className={`w-3.5 h-3.5 ${s <= rev.rating ? "text-amber-400 fill-amber-400" : "text-gray-300"}`}
+                              />
+                            ))}
+                            <span className="text-xs font-bold text-gray-800 ml-1">{rev.rating}.0</span>
+                          </div>
+                          <span className="text-[11px] text-gray-400 font-medium">
+                            {new Date(rev.createdAt).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-700 font-medium italic">
+                          "{rev.comment || "Great experience!"}"
+                        </p>
+                        <div className="text-[11px] text-gray-500 font-bold flex justify-between items-center pt-1 border-t border-cyan-100/60">
+                          <span>— {rev.reviewerId?.name || "PetConnect User"}</span>
+                          {rev.petId?.breed && <span className="text-cyan-700">{rev.petId.breed}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 italic">
+                    Complete transaction pet requests on PetConnect to receive verified reviews from buyers and owners!
+                  </p>
+                )}
+              </div>
+
               <div className="md:col-span-2">
-                <button 
+                <button
                   onClick={() => setShowEditModal(true)}
                   className="px-6 py-3 w-full justify-center bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition duration-200 flex items-center shadow-sm"
                 >
@@ -332,9 +451,8 @@ export default function UserProfile() {
                             <Tag className="w-4 h-4 mr-2 text-cyan-500" />
                             <span className="text-sm">Status: </span>
                             <span
-                              className={`ml-1 text-sm font-medium ${
-                                pet.soldBool ? "text-red-600" : "text-green-600"
-                              }`}
+                              className={`ml-1 text-sm font-medium ${pet.soldBool ? "text-red-600" : "text-green-600"
+                                }`}
                             >
                               {pet.soldBool ? "Sold" : "Available"}
                             </span>
@@ -364,7 +482,7 @@ export default function UserProfile() {
                                 } else {
                                   toast.error(
                                     response.data.message ||
-                                      "Failed to delete pet."
+                                    "Failed to delete pet."
                                   );
                                 }
                               } catch (error) {
@@ -461,7 +579,7 @@ export default function UserProfile() {
                         </p>
 
                         <div className="mt-4 grid grid-cols-2 gap-2">
-                          <button 
+                          <button
                             onClick={() => navigate(`/view-pet/${pet._id}`)}
                             className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm font-medium flex items-center justify-center"
                           >

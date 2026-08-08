@@ -30,6 +30,8 @@ import Wishlist from '../modules/user/pages/Wishlist';
 import Chat from '../modules/user/pages/Chat';
 import Notifications from '../modules/user/pages/Notifications';
 import PetScanner from '../modules/user/pages/PetScanner';
+import UserPetRequests from '../modules/user/pages/UserPetRequests';
+import OwnerPetRequestsManager from '../modules/user/components/OwnerPetRequestsManager';
 
 // Migrated Caretaker Modules
 import CaretakerHome from '../modules/caretaker/pages/Home';
@@ -97,6 +99,8 @@ const AppRoutes = () => {
         <Route path="/wishlist" element={(isAuthenticated && role === "user") ? <Wishlist /> : <Navigate to="/login" />} />
         <Route path="/chat" element={(isAuthenticated && role === "user") ? <Chat /> : <Navigate to="/login" />} />
         <Route path="/notifications" element={(isAuthenticated && role === "user") ? <Notifications /> : <Navigate to="/login" />} />
+        <Route path="/my-pet-requests" element={(isAuthenticated && role === "user") ? <UserPetRequests /> : <Navigate to="/login" />} />
+        <Route path="/owner-pet-requests" element={(isAuthenticated && role === "user") ? <OwnerPetRequestsManager /> : <Navigate to="/login" />} />
       </Route>
 
       {/* Caretaker Routes */}
@@ -132,16 +136,16 @@ const AppRoutes = () => {
                     <h2 className="text-2xl font-semibold text-gray-700 mb-4">Welcome to PetConnect Admin Dashboard</h2>
                     <p className="text-gray-600 mb-6">Select an option from the menu above to manage your pet platform.</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-                      <button onClick={() => window.location.href = '/admin/pet-list'} 
+                      <button onClick={() => window.location.href = '/admin/pet-list'}
                         className="p-4 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-lg hover:from-teal-500 hover:to-cyan-600 transition duration-300">
                         View Pet List
                       </button>
                       <button
-                        onClick={() => window.location.href = '/admin/manage-users'} 
+                        onClick={() => window.location.href = '/admin/manage-users'}
                         className="p-4 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-lg hover:from-teal-500 hover:to-cyan-600 transition duration-300">
                         Manage Users
                       </button>
-                      <button 
+                      <button
                         className="p-4 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-lg hover:from-teal-500 hover:to-cyan-600 transition duration-300">
                         Pets Sold
                       </button>
